@@ -1,0 +1,11 @@
+<launch>
+  
+  <node name="move_tobe" pkg="tobe3_real" type="tobe_move.py" output="screen"/>
+  
+  <node name="read_IMU" pkg="tobe3_real" type="arduino_read1.py" output="screen"/>
+  
+  <node name="detect_lean" pkg="tobe3_real" type="lean_detect.py" output="screen"/>
+  
+  <node name="plot_realtime" pkg="tobe3_real" type="realtime_plot.py" output="screen"/>
+  
+</launch>
