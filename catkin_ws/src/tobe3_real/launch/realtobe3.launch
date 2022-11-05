@@ -1,6 +1,6 @@
 <launch>
   
-  <node name="move_tobe" pkg="tobe3_real" type="tobe_move.py" output="screen"/>
+  <node name="stand_tobe" pkg="tobe3_real" type="tobe_stand.py" output="screen"/>
   
   <node name="read_IMU" pkg="tobe3_real" type="arduino_read1.py" output="screen"/>
   

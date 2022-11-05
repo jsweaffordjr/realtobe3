@@ -1,0 +1,9 @@
+<launch>
+   
+  <node pkg="rosservice" type="rosservice" name="reset_robot" args="call --wait /gazebo/reset_world"/>
+ 
+  <arg name = "stop_physics_delay" default="2.0" />
+  <node pkg="rosservice" type="rosservice" name="pause_sim" launch-prefix="bash -c 'sleep $(arg stop_physics_delay); $0 $@' " args="call --wait /gazebo/pause_physics"/>
+   
+  
+</launch>

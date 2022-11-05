@@ -1,0 +1,20 @@
+<launch>
+
+  <param name="robot_description" textfile="$(find tobe_description)/tobe.urdf" /> 
+
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(find tobe_description)/world/tobe_world.world" />
+    <arg name="paused" value="true"/>
+    <arg name="use_sim_time" value="false"/>
+    
+  </include>
+  
+  <include file="$(find tobe_control)/launch/tobe_control.launch"/>
+  
+  <node name="reset_tobe" pkg="tobe_gazebo" type="tobe_reset.py" output="screen"/>
+  
+  <node name="move_tobe" pkg="tobe_gazebo" type="tobe_move.py" output="screen"/>
+  
+  <node name="process_raw_data" pkg="tobe_gazebo" type="data_output.py" output="screen"/>
+
+</launch>

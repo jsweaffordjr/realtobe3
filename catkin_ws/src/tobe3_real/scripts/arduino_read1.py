@@ -11,7 +11,7 @@ from geometry_msgs.msg import Quaternion
 
 # this script connects to USB port for reading BNO055 IMU sensor via Arduino
 
-ser = serial.Serial('/dev/ttyUSB0', 115200)
+ser = serial.Serial('/dev/ttyUSB1', 115200)
 runrate = 50 # run loop at this rate in Hz
 
 def talker():

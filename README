@@ -1,0 +1,33 @@
+Instructions on the realtobe3 package:
+(Assuming you have already used catkin_make, updated the IP addresses, etc. as shown in
+https://www.youtube.com/watch?v=Q8Yh55vtu8o)
+
+1. Go to the .bashrc file and add or uncomment the following three lines (if they are not already there):
+--> source ~/realtobe3/catkin_ws/devel/setup.bash
+--> export PYTHONPATH=~/realtobe3/catkin_ws/src/tobe3_real/src:$PYTHONPATH
+--> export ROS_PACKAGE_PATH=~/realtobe3/catkin_ws/src:$ROS_PACKAGE_PATH
+
+2. Open a new terminal.
+3. Enter "roslaunch tobe3_real realtobe3.launch" (without the quotes)
+4. This should run the ROS packages to control TOBE.
+5. Enter "Ctrl+C" to exit. 
+
+
+Potential issues:
+1. If the Dynamixels are not connecting properly (showing a message like, 'There is no status packet'), the issue is probably that the wrong USB address
+is being used. Go to tobe.py (in ~/realtobe3/catkin_ws/src/tobe3_real/src/tobe3_real folder). Around line 22 (under the 'initialize TOBE' comment), change
+the digit at the end of the USB address from 0 to 1 or vice versa. For example, if it's /dev/ttyUSB0, change it to /dev/ttyUSB1. Also, if this is your problem, 
+then it will also mean that the Arduino Nano isn't connected, so go to arduino_read1.py (in ~/realtobe3/catkin_ws/src/tobe3_real/scripts) and change the line around
+line 14 with the code: ser = serial.Serial('/dev/ttyUSB1', 115200). You will want to change the digit there to the appropriate one. All of this assumes you are using
+the /dev/ttyUSB addresses. If those are not the right addresses for your system, you will need to change that code accordingly.
+
+2. The code does not begin until after the IMU has been calibrated each time, so the calibration process is as follows:
+
+2a. Open a separate terminal.
+2b. Enter "rostopic echo /calibration" (without the quotes)
+2c. A series of (x,y,z) values will print to the terminal. The values should be between 0 and 3. The x-value denotes the Gyroscope calibration. If it is not already
+equal to 3, then let the IMU sit for a few seconds, and it should calibrate properly. The z-value denotes the Magnetometer calibration. Pick up the IMU, and "draw"
+a figure 8 repeatedly. After doing this a few times, it should calibrate properly. The y-value denotes the Accelerometer calibration. Hold the IMU in various 
+axis orientations for 1-2 seconds in each position, until the calibration is complete. When all three values are equal to 3, you have roughly 10 seconds to attach
+the IMU to the robot, before logging begins. It is important to do this such that the IMU is lined up along the vertical axis, so that all subsequent torso orientations will
+be computed appropriately based on the initial IMU orientation. 

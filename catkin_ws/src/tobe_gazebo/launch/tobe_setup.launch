@@ -1,0 +1,11 @@
+<launch>
+  
+  <node pkg="rosservice" type="rosservice" name="set_joints" args="call --wait /gazebo/set_model_configuration '{model_name: tobe, joint_names:['r_shoulder_swing_joint','l_shoulder_swing_joint','r_shoulder_lateral_joint','l_shoulder_lateral_joint','r_elbow_joint','l_elbow_joint', 'r_hip_lateral_joint','l_hip_lateral_joint','r_hip_swing_joint','l_hip_swing_joint','r_knee_joint','l_knee_joint','r_ankle_swing_joint', 'l_ankle_swing_joint','r_ankle_lateral_joint','l_ankle_lateral_joint'], joint_positions: [0.3927,-0.3927,-0.3491,-0.3491,0.5236,-0.5236,0.2,-0.2,-0.45,0.45,1.7264,-1.7264,1.1932,-1.1932,0.21,-0.21]}'"/>
+  
+  <arg name = "start_physics_delay" default="5.0" />
+  <node pkg="rosservice" type="rosservice" name="start_physics" launch-prefix="bash -c 'sleep $(arg start_physics_delay); $0 $@' " args="call --wait /gazebo/unpause_physics"/>
+
+  <arg name = "apply_force_delay" default="8.0" />
+  <node name="apply_force" pkg="tobe_gazebo" type="randomize_force.py" launch-prefix="bash -c 'sleep $(arg apply_force_delay); $0 $@' " output="screen" />
+      
+</launch>

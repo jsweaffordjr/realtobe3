@@ -1,0 +1,17 @@
+<launch>
+
+  <rosparam file="$(find tobe_control)/config/tobe_control.yaml" command="load"/>
+
+
+  <!-- load the controllers -->
+    <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
+    output="screen" ns="/tobe" args=" l_shoulder_swing_joint_position_controller l_shoulder_lateral_joint_position_controller l_elbow_joint_position_controller l_hip_twist_joint_position_controller l_hip_lateral_joint_position_controller l_hip_swing_joint_position_controller l_knee_joint_position_controller l_ankle_swing_joint_position_controller l_ankle_lateral_joint_position_controller r_shoulder_swing_joint_position_controller r_shoulder_lateral_joint_position_controller r_elbow_joint_position_controller joint_state_controller r_hip_twist_joint_position_controller r_hip_lateral_joint_position_controller r_hip_swing_joint_position_controller r_knee_joint_position_controller r_ankle_swing_joint_position_controller r_ankle_lateral_joint_position_controller"/>
+    
+
+  <!-- convert joint states to TF transforms for rviz, etc -->
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"
+    respawn="false" output="screen">
+    <remap from="/joint_states" to="/tobe/joint_states" />
+  </node>
+
+</launch>

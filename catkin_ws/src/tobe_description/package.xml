@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<package>
+  <name>tobe_description</name>
+  <version>0.0.0</version>
+  <description>The TOBE description package</description>
+
+  <maintainer email="jsweaffordjr@gmail.com">Jerry Sweafford</maintainer>
+
+  <license>BSD</license>
+  <!-- Original code from https://github.com/dxydas/ros-bioloid.git -->
+  
+  <!-- Website of the full initial project -->
+  <url type="website">https://dxydas.wordpress.com</url>
+
+  <!-- Initial Author: -->
+  <author email="dxydas7@gmail.com">Dimitris Xydas</author>
+  <!-- - Keep cad files from the original author.
+       - Change orientation of all parts + collision to comply with ROS XYZ plane.
+       - Change joints rotation.
+       - Add gazebo xml tag for simulation (inertia...)
+       - create additional xacro macro for the legs to facilitate updates.  -->
+  <author email="jsweaffordjr@gmail.com">Jerry Sweafford</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>rospy</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>rospy</run_depend>
+  <run_depend>std_msgs</run_depend>
+
+</package>

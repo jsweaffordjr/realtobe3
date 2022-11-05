@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<!-- gazebo_ros_control plugin for URDF -->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+    <gazebo>
+        <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+            <robotNamespace>/tobe</robotNamespace>
+            <robotSimType>gazebo_ros_control/DefaultRobotHWSim</robotSimType>
+        </plugin>
+		<plugin name="imu_plugin" filename="libgazebo_ros_imu.so">
+		    <alwaysOn>true</alwaysOn>
+		    <bodyName>imu_link</bodyName>
+		    <topicName>/tobe/imu</topicName>
+		    <serviceName>imu_service</serviceName>
+		    <gaussianNoise>0.0</gaussianNoise>
+		    <updateRate>50.0</updateRate>
+		    <visualize>true</visualize>
+		</plugin>
+    </gazebo>
+
+
+</robot>

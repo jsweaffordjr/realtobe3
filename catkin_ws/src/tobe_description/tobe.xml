@@ -1,0 +1,197 @@
+<mujoco model="tobe">
+    <compiler angle="radian" meshdir="/home/jerry/tobesim/catkin_ws/src/tobe_description/meshfiles/" discardvisual="false"/>
+    <size njmax="500" nconmax="100" />
+    <custom>
+        <numeric name="frame_skip" data="4" />
+    </custom>
+    <default>
+        <joint limited='true' damping='1' armature='0' />
+        <geom contype='1' conaffinity='1' condim='1' rgba='0.8 0.6 .4 1' margin="0.001" solref=".02 1" solimp=".8 .8 .01" material="geom" />
+        <motor ctrlrange='-.4 .4' ctrllimited='true' />
+    </default>
+    <option integrator="RK4" iterations="50" solver="PGS" timestep="0.003">
+        <!-- <flags solverstat="enable" energy="enable"/>-->
+    </option>
+    <size nuser_geom='1' nkey='5' />
+    <visual>
+        <map fogstart="3" fogend="5" />
+    </visual>
+    <asset>
+        <texture type="skybox" builtin="gradient" width="100" height="100" rgb1="1 1 1" rgb2="0 0 0" />
+        <texture name="texgeom" type="cube" builtin="flat" mark="cross" width="127" height="1278" rgb1="0.8 0.6 0.4" rgb2="0.8 0.6 0.4" markrgb="1 1 1" random="0.01" />
+        <texture name="texplane" type="2d" builtin="checker" rgb1="0 0 0" rgb2="0.8 0.8 0.8" width="100" height="100" />
+        <material name='MatPlane' texture="texplane" shininess="1" texrepeat="60 60" specular="1"  reflectance="0.5" />
+        <material name='geom' texture="texgeom" texuniform="true" />
+    </asset>
+    <asset>
+        <mesh name="BPF-CHEST-F_FCD-Conv_BDR-Col" file="BPF-CHEST-F_FCD-Conv_BDR-Col.stl" scale="0.001 0.001 0.001" />
+        <mesh name="BPF-CHEST-B_FCD-Conv_BDR-Col" file="BPF-CHEST-B_FCD-Conv_BDR-Col.stl" scale="0.001 0.001 0.001" />
+        <mesh name="CM-5_FCD-Conv_BDR-Col" file="CM-5_FCD-Conv_BDR-Col.stl" scale="0.001 0.001 0.001" />
+        <mesh name="AX-S1_FCD-Conv_BDR-Col" file="AX-S1_FCD-Conv_BDR-Col.stl" scale="0.001 0.001 0.001" />
+        <mesh name="AX-12_FCD-Conv_BDR-Col" file="AX-12_FCD-Conv_BDR-Col.stl" scale="0.001 0.001 0.001" />
+        <mesh name="FP04-F3_FCD-Conv_BDR-Col" file="FP04-F3_FCD-Conv_BDR-Col.stl" scale="0.001 0.001 0.001" />
+        <mesh name="FP04-F12_FCD-Conv_BDR-Col" file="FP04-F12_FCD-Conv_BDR-Col.stl" scale="0.001 0.001 0.001" />
+        <mesh name="FP04-F1_FCD-Conv_BDR-Col" file="FP04-F1_FCD-Conv_BDR-Col.stl" scale="0.001 0.001 0.001" />
+        <mesh name="FP04-F2_FCD-Conv_BDR-Col" file="FP04-F2_FCD-Conv_BDR-Col.stl" scale="0.001 0.001 0.001" />
+        <mesh name="FP04-F11_FCD-Conv_BDR-Col" file="FP04-F11_FCD-Conv_BDR-Col.stl" scale="0.001 0.001 0.001" />
+    </asset>
+    <worldbody>
+        <light directional="true" cutoff="100" exponent="1" diffuse="1 1 1" specular=".1 .1 .1" pos="0 0 1.3" dir="-0 0 -1.3" />
+        <geom name='floor' material="MatPlane" pos='0 0 0' size='40 40 40' type='plane' conaffinity='1' rgba='0.8 0.9 0.8 1' condim='3' />
+        <body name='torso' pos='0 0 0.35'>
+            <camera name="track" mode="trackcom" pos="0 -1.5 0" xyaxes="1 0 0 0 0 1"/>
+            <joint name='root' type='free' pos='0 0 0' limited='false' damping='0' armature='0' stiffness='0' />
+            <geom quat="0.5 0.5 0.5 0.5" type="mesh" contype="1" conaffinity="1" group="1" mesh="BPF-CHEST-F_FCD-Conv_BDR-Col" />
+            <geom quat="0.5 0.5 0.5 0.5" type="mesh" contype="1" conaffinity="1" group="1" mesh="BPF-CHEST-B_FCD-Conv_BDR-Col" />
+            <geom pos="-0.032 0 -0.015" quat="0 -0.707107 0.707107 0" type="mesh" contype="1" conaffinity="1" group="1" mesh="CM-5_FCD-Conv_BDR-Col" />
+            <geom pos="0 0 0.025" quat="0.5 -0.5 0.5 -0.5" type="mesh" contype="1" conaffinity="1" group="1" mesh="AX-S1_FCD-Conv_BDR-Col" />
+            <geom pos="0 -0.032 0" quat="0.707107 0.707107 0 0" type="mesh" contype="1" conaffinity="1" group="1" mesh="AX-12_FCD-Conv_BDR-Col" />
+            <geom pos="-0.019 -0.032 -0.0145" quat="-0.5 0.5 0.5 0.5" type="mesh" contype="1" conaffinity="1" group="1" mesh="FP04-F3_FCD-Conv_BDR-Col" />
+            <geom pos="0 0.032 0" quat="0 0 0.707107 0.707107" type="mesh" contype="1" conaffinity="1" group="1" mesh="AX-12_FCD-Conv_BDR-Col" />
+            <geom pos="-0.019 0.032 -0.0145" quat="-0.5 0.5 0.5 0.5" type="mesh" contype="1" conaffinity="1" group="1" mesh="FP04-F3_FCD-Conv_BDR-Col" />
+            <geom pos="0.0175 0 -0.0655" quat="0.707107 0 0 0.707107" type="mesh" contype="1" conaffinity="1" group="1" mesh="FP04-F3_FCD-Conv_BDR-Col" />
+            <geom pos="-0.0175 0 -0.0655" quat="0.707107 0 0 -0.707107" type="mesh" contype="1" conaffinity="1" group="1" mesh="FP04-F3_FCD-Conv_BDR-Col" />
+            <geom pos="0 -0.0385 -0.0655" quat="0 -1 0 0" type="mesh" contype="1" conaffinity="1" group="1" mesh="AX-12_FCD-Conv_BDR-Col" />
+            <geom pos="0 0.0385 -0.0655" quat="0 0 1 0" type="mesh" contype="1" conaffinity="1" group="1" mesh="AX-12_FCD-Conv_BDR-Col" />
+        
+	    <body name="r_shoulder_swing_link" pos="0 -0.032 0" quat="0 0 0.707107 -0.707107">
+	        <inertial pos="-0.010936 0.012363 -7e-10" quat="0.657566 0.657566 -0.260014 -0.260014" mass="0.0595946" diaginertia="0.0089413 0.0054522 0.00477013" />
+	        <joint name="r_shoulder_swing_joint" pos="0 0 0" axis="0 0 1" limited="true" range="-1.5708 1.5708" />
+	        <geom pos="0 0.014 0.044" quat="0 -1 0 0" type="mesh" contype="1" conaffinity="1" group="1" mesh="FP04-F1_FCD-Conv_BDR-Col" />
+	        <body name="r_upper_arm_link" pos="0 0.014 0.044" quat="0.707107 0 -0.707107 0">
+	            <inertial pos="-2.032e-07 -0.00682916 -0.000671055" quat="0.723878 0.689928 1.2262e-05 2.21027e-06" mass="0.382287" diaginertia="0.0274691 0.0226378 0.00774739" />
+	            <joint name="r_shoulder_lateral_joint" pos="0 0 0" axis="0 0 1" limited="true" range="-1.5 0.1" />
+	            <geom quat="0 0 0 1" type="mesh" contype="1" conaffinity="1" group="1" mesh="AX-12_FCD-Conv_BDR-Col" />
+	            <geom pos="0 0.0415 0" quat="0 0 0 1" type="mesh" contype="1" conaffinity="1" group="1" mesh="FP04-F3_FCD-Conv_BDR-Col" />
+	            <geom pos="0 0.0675 0" quat="0.707107 0.707107 0 0" type="mesh" contype="1" conaffinity="1" group="1" mesh="FP04-F2_FCD-Conv_BDR-Col" />
+	            <body name="r_lower_arm_link" pos="0 0.0675 0" quat="0 0.707107 0 0.707107">
+	                <inertial pos="-0.00142845 -0.00918154 -0.000541922" quat="0.711883 0.696987 0.0229376 0.0830972" mass="0.413684" diaginertia="0.0398137 0.0373065 0.00607108" />
+	                <joint name="r_elbow_joint" pos="0 0 0" axis="0 0 1" limited="true" range="0 1.57" />
+	                <geom type="mesh" contype="1" conaffinity="1" group="1" mesh="AX-12_FCD-Conv_BDR-Col" />
+	                <geom pos="0 -0.0415 0" type="mesh" contype="1" conaffinity="1" group="1" mesh="FP04-F3_FCD-Conv_BDR-Col" />
+	                <geom pos="0 -0.0415 0" quat="0.707107 0.707107 0 0" type="mesh" contype="1" conaffinity="1" group="1" mesh="FP04-F11_FCD-Conv_BDR-Col" />
+	            </body>
+	        </body>
+	    </body>
+	    <body name="l_shoulder_swing_link" pos="0 0.032 0" quat="0.707107 -0.707107 0 0">
+	        <inertial pos="-0.010936 -0.012363 7e-10" quat="0.657566 0.657566 0.260014 0.260014" mass="0.0595946" diaginertia="0.0089413 0.0054522 0.00477013" />
+	        <joint name="l_shoulder_swing_joint" pos="0 0 0" axis="0 0 1" limited="true" range="-1.5708 1.5708" />
+	        <geom pos="0 0.014 0.044" quat="0 -1 0 0" type="mesh" contype="1" conaffinity="1" group="1" mesh="FP04-F1_FCD-Conv_BDR-Col" />
+	        <body name="l_upper_arm_link" pos="0 0.014 0.044" quat="0.707107 0 -0.707107 0">
+	        <inertial pos="2.032e-07 0.00682916 -0.000671055" quat="0.689928 0.723878 2.21027e-06 1.2262e-05" mass="0.382287" diaginertia="0.0274691 0.0226378 0.00774739" />
+	            <joint name="l_shoulder_lateral_joint" pos="0 0 0" axis="0 0 1" limited="true" range="-1.5 0.1" />
+	            <geom quat="0 -1 0 0" type="mesh" contype="1" conaffinity="1" group="1" mesh="AX-12_FCD-Conv_BDR-Col" />
+	            <geom pos="0 0.0415 0" quat="0 0 0 1" type="mesh" contype="1" conaffinity="1" group="1" mesh="FP04-F3_FCD-Conv_BDR-Col" />
+	            <geom pos="0 0.0675 0" quat="0.707107 0.707107 0 0" type="mesh" contype="1" conaffinity="1" group="1" mesh="FP04-F2_FCD-Conv_BDR-Col" />
+	            <body name="l_lower_arm_link" pos="0 0.0675 0" quat="0 0.707107 0 0.707107">
+	                <inertial pos="-0.000516935 0.00792395 -0.000621772" quat="0.693547 0.720016 -0.0193684 -0.0139302" mass="0.412587" diaginertia="0.0329733 0.0280134 0.0090255" />
+	                <joint name="l_elbow_joint" pos="0 0 0" axis="0 0 1" limited="true" range="-1.57 0" />
+	                <geom type="mesh" contype="1" conaffinity="1" group="1" mesh="AX-12_FCD-Conv_BDR-Col" />
+	                <geom pos="0 -0.0415 0" type="mesh" contype="1" conaffinity="1" group="1" mesh="FP04-F3_FCD-Conv_BDR-Col" />
+	                <geom pos="0 -0.0415 0" quat="0.707107 0.707107 0 0" type="mesh" contype="1" conaffinity="1" group="1" mesh="FP04-F11_FCD-Conv_BDR-Col" />
+	            </body>
+	        </body>
+	    </body>
+	    <body name="r_hip_twist_link" pos="0 -0.0385 -0.0655" quat="0 -0.707107 0.707107 0">
+	        <inertial pos="0.000541631 -9.2e-07 0.0190685" quat="0.486736 0.512915 0.512965 0.486696" mass="0.0755194" diaginertia="0.0194815 0.0133818 0.00826095" />
+	        <joint name="r_hip_twist_joint" pos="0 0 0" axis="0 0 1" limited="true" range="-0.3 0.3" />
+	        <geom pos="0 0 0.047" quat="0 0.707107 0.707107 0" type="mesh" contype="1" conaffinity="1" group="1" mesh="FP04-F2_FCD-Conv_BDR-Col" />
+	        <body name="r_hip_lateral_link" pos="0 0 0.047" quat="0.707107 -0.707107 0 0">
+	            <inertial pos="-2.032e-07 -0.00682916 -0.000671055" quat="0.723878 0.689928 1.2262e-05 2.21027e-06" mass="0.382287" diaginertia="0.0274691 0.0226378 0.00774739" />
+	            <joint name="r_hip_lateral_joint" pos="0 0 0" axis="0 0 1" limited="true" range="-0.3 1.5" />
+	            <geom quat="0 0 1 0" type="mesh" contype="1" conaffinity="1" group="1" mesh="AX-12_FCD-Conv_BDR-Col" />
+	            <geom pos="0 -0.042 0" quat="0 0 1 0" type="mesh" contype="1" conaffinity="1" group="1" mesh="FP04-F3_FCD-Conv_BDR-Col" />
+	            <geom pos="0 -0.068 0" quat="0.707107 -0.707107 0 0" type="mesh" contype="1" conaffinity="1" group="1" mesh="FP04-F2_FCD-Conv_BDR-Col" />
+	            <body name="r_upper_leg_link" pos="0 -0.068 0" quat="0.5 0.5 -0.5 -0.5">
+	                <inertial pos="-0.00121101 5.68e-08 -0.0444075" quat="0.99978 0 -0.0209873 0" mass="0.155765" diaginertia="0.0869264 0.0784006 0.0137391" />
+	                <joint name="r_hip_swing_joint" pos="0 0 0" axis="0 0 1" limited="true" range="-1.5708 1.5708" />
+	                <geom quat="0.707107 0 0 0.707107" type="mesh" contype="1" conaffinity="1" group="1" mesh="AX-12_FCD-Conv_BDR-Col" />
+	                <geom pos="0.042 0 0" quat="0.707107 0 0 0.707107" type="mesh" contype="1" conaffinity="1" group="1" mesh="FP04-F3_FCD-Conv_BDR-Col" />
+	                <geom pos="0.065 0.0145 0" quat="0 0.707107 0 -0.707107" type="mesh" contype="1" conaffinity="1" group="1" mesh="FP04-F1_FCD-Conv_BDR-Col" />
+	                <body name="r_lower_leg_link" pos="0.065 0.0145 0">
+	                    <inertial pos="-0.00100525 -0.0012675 -0.0110864" quat="0.9993 0.0275387 -0.0138041 0.0212156" mass="0.432609" diaginertia="0.0543327 0.0480283 0.0136068" />
+	                    <joint name="r_knee_joint" pos="0 0 0" axis="0 0 1" limited="true" range="0 1.5708" />
+	                    <geom type="mesh" contype="1" conaffinity="1" group="1" mesh="AX-12_FCD-Conv_BDR-Col" />
+	                    <geom pos="0.02 -0.0145 0" quat="0.707107 0 0 0.707107" type="mesh" contype="1" conaffinity="1" group="1" mesh="FP04-F3_FCD-Conv_BDR-Col" />
+	                    <geom pos="0.02 -0.0145 0" quat="0.707107 0 0 -0.707107" type="mesh" contype="1" conaffinity="1" group="1" mesh="FP04-F3_FCD-Conv_BDR-Col" />
+	                    <geom pos="0.062 -0.0145 0" quat="0 0.707107 0.707107 0" type="mesh" contype="1" conaffinity="1" group="1" mesh="AX-12_FCD-Conv_BDR-Col" />
+	                    <body name="r_ankle_swing_link" pos="0.062 -0.0145 0" quat="0 1 0 0">
+	                        <inertial pos="-2.032e-07 -0.00682916 -0.000671055" quat="0.723878 0.689928 1.2262e-05 2.21027e-06" mass="0.382287" diaginertia="0.0274691 0.0226378 0.00774739" />
+	                        <joint name="r_ankle_swing_joint" pos="0 0 0" axis="0 0 1" limited="true" range="-1 1" />
+	                        <geom pos="-0.0005 0 0" quat="0.707107 0 0.707107 0" type="mesh" contype="1" conaffinity="1" group="1" mesh="FP04-F2_FCD-Conv_BDR-Col" />
+	                        <geom pos="0.0255 0 0" quat="0.5 -0.5 -0.5 -0.5" type="mesh" contype="1" conaffinity="1" group="1" mesh="FP04-F3_FCD-Conv_BDR-Col" />
+	                        <body name="r_ankle_lateral_link" pos="0.045 0 -0.012" quat="0.707107 -0.707107 0 0">
+	                            <inertial pos="-0.000571914 -0.000368035 0.00295408" quat="0.0520358 0.685208 0.0881342 0.72112" mass="0.284264" diaginertia="0.041444 0.0351258 0.0123227" />
+	                            <joint name="r_ankle_lateral_joint" pos="0 0 0" axis="0 0 1" limited="true" range="-0.1 0.5" />
+	                            <geom type="mesh" contype="1" conaffinity="1" group="1" mesh="AX-12_FCD-Conv_BDR-Col" />
+	                            <geom quat="0.707107 0 0.707107 0" type="mesh" contype="1" conaffinity="1" group="1" mesh="FP04-F2_FCD-Conv_BDR-Col" />
+	                            <geom pos="0.0235 -0.004 0.01" quat="0.5 0.5 0.5 -0.5" type="mesh" contype="1" conaffinity="1" group="1" mesh="FP04-F12_FCD-Conv_BDR-Col" />
+	                        </body>
+	                    </body>
+	                </body>
+	            </body>
+	        </body>
+	    </body>
+	    <body name="l_hip_twist_link" pos="0 0.0385 -0.0655" quat="0 0.707107 0.707107 0">
+	        <inertial pos="0.000541631 -9.2e-07 0.0190685" quat="0.486736 0.512915 0.512965 0.486696" mass="0.0755194" diaginertia="0.0194815 0.0133818 0.00826095" />
+	        <joint name="l_hip_twist_joint" pos="0 0 0" axis="0 0 1" limited="true" range="-0.3 0.3" />
+	        <geom pos="0 0 0.047" quat="0 0.707107 0.707107 0" type="mesh" contype="1" conaffinity="1" group="1" mesh="FP04-F2_FCD-Conv_BDR-Col" />
+	        <body name="l_hip_lateral_link" pos="0 0 0.047" quat="0.707107 0.707107 0 0">
+	            <inertial pos="2.032e-07 0.00682916 -0.000671055" quat="0.689928 0.723878 2.21027e-06 1.2262e-05" mass="0.382287" diaginertia="0.0274691 0.0226378 0.00774739" />
+	            <joint name="l_hip_lateral_joint" pos="0 0 0" axis="0 0 1" limited="true" range="-1.5 0.3" />
+	            <geom quat="0 -1 0 0" type="mesh" contype="1" conaffinity="1" group="1" mesh="AX-12_FCD-Conv_BDR-Col" />
+	            <geom pos="0 0.042 0" quat="0 0 0 1" type="mesh" contype="1" conaffinity="1" group="1" mesh="FP04-F3_FCD-Conv_BDR-Col" />
+	            <geom pos="0 0.068 0" quat="0 0 -0.707107 0.707107" type="mesh" contype="1" conaffinity="1" group="1" mesh="FP04-F2_FCD-Conv_BDR-Col" />
+	            <body name="l_upper_leg_link" pos="0 0.068 0" quat="0.5 0.5 -0.5 -0.5">
+	                <inertial pos="-0.00121101 5.68e-08 -0.0444075" quat="0.99978 0 -0.0209873 0" mass="0.155765" diaginertia="0.0869264 0.0784006 0.0137391" />
+	                <joint name="l_hip_swing_joint" pos="0 0 0" axis="0 0 1" limited="true" range="-1.5 1.5" />
+	                <geom quat="0.707107 0 0 -0.707107" type="mesh" contype="1" conaffinity="1" group="1" mesh="AX-12_FCD-Conv_BDR-Col" />
+	                <geom pos="-0.042 0 0" quat="0.707107 0 0 -0.707107" type="mesh" contype="1" conaffinity="1" group="1" mesh="FP04-F3_FCD-Conv_BDR-Col" />
+	                <geom pos="-0.065 0.0145 0" quat="0 0.707107 0 0.707107" type="mesh" contype="1" conaffinity="1" group="1" mesh="FP04-F1_FCD-Conv_BDR-Col" />
+	                <body name="l_lower_leg_link" pos="-0.065 0.0145 0">
+	                    <inertial pos="-0.00100525 0.000267459 -0.0110862" quat="0.999739 -0.0137276 -0.0135257 -0.0122296" mass="0.432609" diaginertia="0.0541925 0.0479557 0.013554" />
+	                    <joint name="l_knee_joint" pos="0 0 0" axis="0 0 1" limited="true" range="-1.5708 0" />
+	                    <geom type="mesh" contype="1" conaffinity="1" group="1" mesh="AX-12_FCD-Conv_BDR-Col" />
+	                    <geom pos="-0.02 -0.0145 0" quat="0.707107 0 0 -0.707107" type="mesh" contype="1" conaffinity="1" group="1" mesh="FP04-F3_FCD-Conv_BDR-Col" />
+	                    <geom pos="-0.02 -0.0145 0" quat="0.707107 0 0 0.707107" type="mesh" contype="1" conaffinity="1" group="1" mesh="FP04-F3_FCD-Conv_BDR-Col" />
+	                    <geom pos="-0.062 -0.0145 0" quat="0 -0.707107 0.707107 0" type="mesh" contype="1" conaffinity="1" group="1" mesh="AX-12_FCD-Conv_BDR-Col" />
+	                    <body name="l_ankle_swing_link" pos="-0.062 -0.0145 0" quat="0 1 0 0">
+	                        <inertial pos="2.032e-07 0.00682916 -0.000671055" quat="0.689928 0.723878 2.21027e-06 1.2262e-05" mass="0.382287" diaginertia="0.0274691 0.0226378 0.00774739" />
+	                        <joint name="l_ankle_swing_joint" pos="0 0 0" axis="0 0 1" limited="true" range="-1 1" />
+	                        <geom pos="0.0005 0 0" quat="0.707107 0 -0.707107 0" type="mesh" contype="1" conaffinity="1" group="1" mesh="FP04-F2_FCD-Conv_BDR-Col" />
+	                        <geom pos="-0.0255 0 0" quat="0.5 -0.5 0.5 0.5" type="mesh" contype="1" conaffinity="1" group="1" mesh="FP04-F3_FCD-Conv_BDR-Col" />
+	                        <body name="l_ankle_lateral_link" pos="-0.045 0 -0.012" quat="0.707107 -0.707107 0 0">
+	                            <inertial pos="-0.000571914 -0.00492895 0.00295408" quat="-0.0511691 0.685335 -0.0869816 0.721202" mass="0.284264" diaginertia="0.0414398 0.0351319 0.0123271" />
+	                            <joint name="l_ankle_lateral_joint" pos="0 0 0" axis="0 0 1" limited="true" range="-0.5 0.1" />
+	                            <geom type="mesh" contype="1" conaffinity="1" group="1" mesh="AX-12_FCD-Conv_BDR-Col" />
+	                            <geom quat="0.707107 0 -0.707107 0" type="mesh" contype="1" conaffinity="1" group="1" mesh="FP04-F2_FCD-Conv_BDR-Col" />
+	                            <geom pos="-0.0235 -0.004 0.01" quat="-0.5 0.5 -0.5 -0.5" type="mesh" contype="1" conaffinity="1" group="1" mesh="FP04-F12_FCD-Conv_BDR-Col" />
+	                        </body>
+	                    </body>
+	                </body>
+	            </body>
+	        </body>
+	    </body>
+	</body>
+    </worldbody>
+    <actuator>
+        <motor name='r_shoulder_swing_joint' gear='200' joint='r_shoulder_swing_joint' />
+        <motor name='r_shoulder_lateral_joint' gear='200' joint='r_shoulder_lateral_joint' />
+        <motor name='r_elbow_joint' gear='200' joint='r_elbow_joint' />
+        <motor name='l_shoulder_swing_joint' gear='200' joint='l_shoulder_swing_joint' />
+        <motor name='l_shoulder_lateral_joint' gear='200' joint='l_shoulder_lateral_joint' />
+        <motor name='l_elbow_joint' gear='200' joint='l_elbow_joint' />
+        <motor name='r_hip_twist_joint' gear='200' joint='r_hip_twist_joint' />
+        <motor name='r_hip_lateral_joint' gear='200' joint='r_hip_lateral_joint' />
+        <motor name='r_hip_swing_joint' gear='200' joint='r_hip_swing_joint' />
+        <motor name='r_knee_joint' gear='200' joint='r_knee_joint' />
+        <motor name='r_ankle_swing_joint' gear='200' joint='r_ankle_swing_joint' />
+        <motor name='r_ankle_lateral_joint' gear='200' joint='r_ankle_lateral_joint' />
+        <motor name='l_hip_twist_joint' gear='200' joint='l_hip_twist_joint' />
+        <motor name='l_hip_lateral_joint' gear='200' joint='l_hip_lateral_joint' />
+        <motor name='l_hip_swing_joint' gear='200' joint='l_hip_swing_joint' />
+        <motor name='l_knee_joint' gear='200' joint='l_knee_joint' />
+        <motor name='l_ankle_swing_joint' gear='200' joint='l_ankle_swing_joint' />
+        <motor name='l_ankle_lateral_joint' gear='200' joint='l_ankle_lateral_joint' />
+    </actuator>
+</mujoco>

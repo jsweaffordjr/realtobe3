@@ -7,6 +7,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   geometry_msgs
   sensor_msgs  
+  gazebo_ros
 )
 
 find_package(Boost REQUIRED COMPONENTS system)
@@ -17,6 +18,9 @@ catkin_python_setup()
 catkin_package(
   CATKIN_DEPENDS 
     sensor_msgs
+    gazebo_ros 
+    hector_gazebo_plugins
   DEPENDS 
+    gazebo
   
 )

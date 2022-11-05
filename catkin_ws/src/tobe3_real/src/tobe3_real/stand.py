@@ -30,82 +30,26 @@ class StandFunc:
         
         # convert joint angle, name order to ROBOTIS right/left (odd-/even-numbered) from head to toe:     
         self.init_angles = [f[15],f[12],f[16],f[13],f[17],f[14],f[6],f[5],f[7],f[4],f[8],f[3],f[9],f[2],f[10],f[1],f[11],f[0]]
-        self.joints = [j[15],j[12],j[16],j[13],j[17],j[14],j[6],j[5],j[7],j[4],j[8],j[3],j[9],j[2],j[10],j[1],j[11],j[0]]        
-        
-        # thresholds:
-        self.qz_min = 0.02 # lean threshold: values less than this (~1.15 deg.) are ignored
-        self.az_min = 0.1 # push threshold: values less than this are ignored
-    
-    def recover(self, push, push_threshold,gain1,gain2):
-        max_push = 5 # value of max expected torso acceleration, in m/s^2
-        move = [0,0]
-        max_response = [gain1,gain2] # max responses of shoulders, hips, respectively
-        
-        if push >= max_push: # if push exceeds maximum expected, 
-            move = max_response # set response to maximum
-        elif push > push_threshold: # if push exceeds threshold, set mid response:
-            move1 = 0.7*max_response[0]
-            move2 = 0.7*max_response[1]
-            move = [move1,move2]
-        
-        return move
+        self.joints = [j[15],j[12],j[16],j[13],j[17],j[14],j[6],j[5],j[7],j[4],j[8],j[3],j[9],j[2],j[10],j[1],j[11],j[0]]     
         
     def get_angles(self, z_lean, l_deriv, l_ddot, sag_ang_diffs, falling):
         # recall initial joint angles  
         f = [0.3927,-0.3927,-0.3491,-0.3491,0.5236,-0.5236,0,0,0.15,-0.15,-0.5064,0.5064,1.7264,-1.7264,1.1,-1.1,0.2,-0.2]
         cmds=np.zeros(8) # initialize output array
         
-        if not falling:
-            # use ankle or hip/shoulder ctrl
-            if sag_ang_diffs[0] != 0 or sag_ang_diffs[1] != 0:
-                diff1 = sag_ang_diffs[0]
-                diff2 = sag_ang_diffs[1]
-                diff4 = 0
-            else:
-                # ankle controller gains
-                Kpa = 0.005 # proportional gain for ankles    
-                Kda = 0 # derivative gain for ankles
+        diff1 = sag_ang_diffs[0]
+        diff2 = sag_ang_diffs[1]
+        diff3 = sag_ang_diffs[2]
+        diff4 = sag_ang_diffs[3]
             
-                # compute ankle adjustments:
-                h = 0.29 # height of IMU from ground
-                g = 9.81 # acceleration due to gravity
-                omega_inv = math.sqrt(h/g)
-                diff4 = Kpa*(z_lean[4]+omega_inv*l_deriv) + Kda*(l_deriv+omega_inv*l_ddot)  # PD control of ankles (capture point) 
-                diff1 = 0
-                diff2 = 0
-        
-            # left ankle angle should increase (f15 + diff), right ankle angle should decrease (f14 - diff) when forward lean occurs
-            # left shoulder angle should increase (f1 + diff3), right shoulder angle should decrease (f0 - diff3) when forward acc. occurs
-            # left hip angle should increase (f11 + diff2), right hip angle should decrease (f10 - diff2) when forward acceleration occurs
-            f1 = self.init_angles[14] - diff4 # right sagittal ankle
-            f2 = self.init_angles[15] + diff4 # left sagittal ankle
-            self.init_angles[14] = f1
-            self.init_angles[15] = f2
-
-            cmds[0] = f[0] - diff1 # right sagittal shoulder
-            cmds[1] = f[1] + diff1 # left sagittal shoulder
-            cmds[2] = f[10] - diff2 # right sagittal hip
-            cmds[3] = f[11] + diff2 # left sagittal hip
-            cmds[4] = f[12]  # right knee
-            cmds[5] = f[13]  # left knee
-            cmds[6] = f1 # right sagittal ankle
-            cmds[7] = f2 # left sagittal ankle
-        
-        else:
-            self.init_angles = f
-            diff1 = sag_ang_diffs[0]
-            diff2 = sag_ang_diffs[1]
-            diff3 = sag_ang_diffs[2]
-            diff4 = sag_ang_diffs[3]
-            
-            cmds[0] = f[0] - diff1 # right sagittal shoulder
-            cmds[1] = f[1] + diff1 # left sagittal shoulder
-            cmds[2] = f[10] - diff2 # right sagittal hip
-            cmds[3] = f[11] + diff2 # left sagittal hip
-            cmds[4] = f[12] + diff3 # right knee
-            cmds[5] = f[13] - diff3 # left knee
-            cmds[6] = f[14] + diff4 # right sagittal ankle
-            cmds[7] = f[15] - diff4 # left sagittal ankle
+        cmds[0] = f[0] - diff1 # right sagittal shoulder
+        cmds[1] = f[1] + diff1 # left sagittal shoulder
+        cmds[2] = f[10] - diff2 # right sagittal hip
+        cmds[3] = f[11] + diff2 # left sagittal hip
+        cmds[4] = f[12] + diff3 # right knee
+        cmds[5] = f[13] - diff3 # left knee
+        cmds[6] = f[14] + diff4 # right sagittal ankle
+        cmds[7] = f[15] - diff4 # left sagittal ankle
 
         return cmds
                

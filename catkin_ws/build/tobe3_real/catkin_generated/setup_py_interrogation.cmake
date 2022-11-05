@@ -1,0 +1,7 @@
+set(tobe3_real_SETUP_PY_SETUP_MODULE "distutils.core")
+set(tobe3_real_SETUP_PY_VERSION "0.1.0")
+set(tobe3_real_SETUP_PY_SCRIPTS "")
+set(tobe3_real_SETUP_PY_PACKAGES "tobe3_real")
+set(tobe3_real_SETUP_PY_PACKAGE_DIRS "src/tobe3_real")
+set(tobe3_real_SETUP_PY_MODULES "")
+set(tobe3_real_SETUP_PY_MODULE_DIRS "")
