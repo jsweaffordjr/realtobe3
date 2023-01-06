@@ -67,31 +67,53 @@ def HOSM_diff(dt,signal,est_signal,est_deriv,est_deriv2,est_deriv3):
     
     return z0dot, z1dot, z0_next, z1_next, z2_next, z3_next
     
-class Policy(nn.Module): # class for the NN trained in simulation
+class Policy(nn.Module):
     def __init__(self):
         super(Policy, self).__init__()
         self.critic = nn.Sequential(
-            layer_init(nn.Linear(40, 64)),
-            nn.Tanh(),
-            layer_init(nn.Linear(64, 64)),
-            nn.Tanh(),
-            layer_init(nn.Linear(64, 1), std=1.0),
+            layer_init(nn.Linear(24, 100)),
+            nn.ReLU(),
+            layer_init(nn.Linear(100, 50)),
+            nn.ReLU(),
+            layer_init(nn.Linear(50, 25)),
+            nn.ReLU(),
+            layer_init(nn.Linear(25, 1), std=1.0),
         )
-        self.actor_alpha_and_beta = nn.Sequential(
-            layer_init(nn.Linear(40, 64)),
+        #self.actor_alpha_and_beta = nn.Sequential(
+        #    layer_init(nn.Linear(24, 100)),
+        #    nn.Tanh(),
+        #    layer_init(nn.Linear(100, 50)),
+        #    nn.Tanh(),
+        #    layer_init(nn.Linear(50, 25)),
+        #    nn.Tanh(),
+        #    layer_init(nn.Linear(25, 20), std=0.01),
+        #    nn.Softplus(), # lower bound of zero for output
+        #)
+        self.actor_beta = nn.Sequential(
+            layer_init(nn.Linear(24, 100)),
             nn.Tanh(),
-            layer_init(nn.Linear(64, 64)),
+            layer_init(nn.Linear(100, 50)),
             nn.Tanh(),
-            layer_init(nn.Linear(64, 20), std=0.01),
-            nn.Softplus() # lower bound of zero for output
+            layer_init(nn.Linear(50, 25)),
+            nn.Tanh(),
+            layer_init(nn.Linear(25, 10), std=0.01),
+            nn.Softplus(), # lower bound of zero for output
         )
+        self.actor_alpha = nn.Parameter(torch.zeros(1, 10))
 
     def get_angles(self, x):
-        alphas_and_betas = torch.add(self.actor_alpha_and_beta(x),1) # now, alpha, beta values >= 1
-        action_alpha, action_beta = torch.tensor_split(alphas_and_betas, 2, dim=0)
-        probs = Beta(action_alpha, action_beta)
-        #action = probs.sample() # sampled value from Beta dist. will be in [0,1] range
-        action = torch.div(torch.add(action_alpha, -1.0),torch.add(action_alpha,torch.add(action_beta,-2.0)))
+        action_beta = torch.add(self.actor_beta(x),2)
+        #action_beta = torch.add(self.actor_beta(x),2) # now, beta values >= 2
+        #action_logalpha = self.actor_alpha.squeeze()
+        action_alpha = torch.add(self.actor_alpha.squeeze(),2) # now, alpha values >= 2
+        #alphas_and_betas = torch.add(self.actor_alpha_and_beta(x),2) # now, alpha, beta values >= 1
+        #action_alpha, action_beta = torch.tensor_split(alphas_and_betas, 2, dim=0)
+        #probs = Beta(action_alpha, action_beta)
+        #action = probs.sample() # sample from Beta dist. will be in [0,1] range
+        #action = torch.div(torch.add(action_alpha, -0.33333),torch.add(action_alpha,torch.add(action_beta,-0.66666))) #median
+        action = torch.div(torch.add(action_alpha, -1.0),torch.add(action_alpha,torch.add(action_beta,-2.0))) #mode
+        #action = torch.div(action_alpha,torch.add(action_alpha,action_beta)) # mean
+        
         return action    
 
 class StandFunc:
@@ -175,7 +197,7 @@ class Stand:
         device = torch.device("cuda" if torch.cuda.is_available() and args.cuda else "cpu")
         self.policy = Policy().to(device)
         #self.policy.load_state_dict(torch.load(f"/home/jerry/cleanrl/models/0812_run1/agent_ep_200.pt", map_location=device))
-        self.policy.load_state_dict(torch.load(f"/home/jerry/cleanrl/models/1025_run2/agent_ep_8493.pt")) # CHANGE THIS TO YOUR MODEL!
+        self.policy.load_state_dict(torch.load(f"/home/jerry/cleanrl/models/1208_run3/agent_ep_6662.pt")) # CHANGE THIS TO YOUR MODEL!
         self.policy.eval()
         
         # switch to 'active' status, move to initial 'home' position, if not already there:
@@ -281,7 +303,7 @@ class Stand:
         t = 0.0       
         while not rospy.is_shutdown(): 
             # read joint motor positions:
-            #leg_angs = self.tobe.read_leg_angles()          
+            q = self.tobe.read_leg_angles()          
                                          
             # compute appropriate joint commands and execute commands: 
             #rospy.loginfo("Fore lean, vel: %d, %d", self.fore_data.x, self.fore_data.y) 
@@ -289,20 +311,50 @@ class Stand:
             
             init_pos = [0.39,-0.35,0.52,-0.39,-0.35,-0.52]
             init_cmd = [281,741,272,750,409,613]
-            factor = np.sin((2*np.pi/6)*t) 
-            arm_angles = init_cmd
-            arm_angles[0] = 200.0 + factor*150.0
-            arm_angles[1] = 800.0 + factor*150.0
-            arm_angles[2] = 375.0 + factor*125.0
-            arm_angles[3] = 645.0 + factor*125.0
-            arm_angles[4] = 450.0 + factor*50.0
-            arm_angles[5] = 570.0 + factor*50.0
+
+            
+            # check for repeating joint angle values:
+            threshold = 0.05
+            for i in range(10): 
+                if (abs(q[i] - self.q0_last1[i])+abs(q[i] - self.q0_last2[i])+abs(q[i] - self.q0_last3[i])+abs(q[i] - self.q0_last4[i])) <= threshold:
+                    # reset differentiator if past four values are very near the current joint angle value:
+                    self.q0_next[i] = q[i]
+                    self.q1_next[i] = 0.0
+                    self.q2_next[i] = 0.0
+                    self.q3_next[i] = 0.0 
+            
+            self.q0_last1=q
+            self.q0_last2=self.q0_last1
+            self.q0_last3=self.q0_last2
+            self.q0_last4=self.q0_last3
+      
+            q0 = self.q0_next
+            q1 = self.q1_next
+            q2 = self.q2_next
+            q3 = self.q3_next
+            [joint_vels, q1dot,self.q0_next,self.q1_next,self.q2_next,self.q3_next] = HOSM_diff(dt, q, q0, q1, q2, q3)
+            #self.tobe.publish_leg_ang_vels(joint_vels) # publish leg joint angular velocities
+
+            z = leg_angs
+            y = joint_vels
+            state1 = [z[0],z[2],z[4],z[6],z[8],z[1],z[3],z[5],z[7],z[9],y[0],y[2],y[4],y[6],y[8],y[1],y[3],y[5],y[7],y[9],self.fore_data.x, self.side_data.x,self.fore_data.y, self.side_data.y] 
+            # update state vector
+            obs_array = np.array(state1) # create observation array
+            obs = torch.Tensor(obs_array) # convert observation array to Tensor
+            
+            # compute appropriate joint commands and execute commands: 
+            response = policy.get_angles(obs) # use RL policy to get 10 x 1 action output
+            response_in_radians = policy_to_cmd(response,references) # convert output of RL policy to joint angle command in radians 
+            
             
             #arm_joints=self.tobe.convert_angles_to_commands(arm_angle_ids,arm_angles) # convert to 10-bit cmds
             arm_joints = self.tobe.convert_motor_positions_to_angles(arm_angle_ids,arm_angles)
             self.tobe.command_arm_motors(arm_angles)  
             self.tobe.publish_arm_cmds(arm_joints)
-            rospy.loginfo(arm_joints)   
+            rospy.loginfo(arm_joints)  
+            
+            
+             
             t += dt
             r.sleep()
         rospy.loginfo("Finished standing control thread")

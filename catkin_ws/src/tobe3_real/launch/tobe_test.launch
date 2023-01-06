@@ -1,0 +1,5 @@
+<launch>
+  
+  <node name="test_tobe" pkg="tobe3_real" type="tobe_test.py" output="screen"/>
+  
+</launch>

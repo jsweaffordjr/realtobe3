@@ -277,7 +277,7 @@ class Tobe:
         for j in range(len(ids)): # get 10-bit motor values:
             num=ids[j] # get motor ID number from array
             ang=angles[j] # get desired joint angle value in radians
-            cmds[j]=(1023/300)*((ang*(180/math.pi)*c[num-1])+b[num-1]) # convert to degrees, apply polarity, convert to 10-bit, add offset
+            cmds[j]=(1023/300)*(ang*((180/math.pi)*c[num-1])+b[num-1]) # convert to degrees, apply polarity, convert to 10-bit, add offset
         return cmds
 
     def convert_motor_positions_to_angles(self,ids,cmds):
@@ -291,5 +291,5 @@ class Tobe:
         for j in range(len(ids)): # get 10-bit motor values:
             num=ids[j] # get motor ID number from array
             cmd=cmds[j] # get motor position as 10-bit value
-            angs[j]=(((300/1023)*cmd)-b[num-1])*c[num-1]*(math.pi/180) # convert from 10-bit, subtract offset, apply polarity, go to degrees
+            angs[j]=(((300/1023)*cmd)-b[num-1])*c[num-1]*(math.pi/180) # convert from 10-bit, subtract offset, apply polarity, go to radians
         return angs    

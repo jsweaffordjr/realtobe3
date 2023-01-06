@@ -15,19 +15,12 @@ from geometry_msgs.msg import Quaternion
 from tobe3_real.tobesim import Tobe
 from torch.distributions.beta import Beta
 
-
-"""
-    This code allows for the Gazebo TOBE to (attempt to) mirror what happens with the physical TOBE.
-    The commands that are published and run on the physical robot are mimicked on the simulated robot. 
-    This was originally a copy of stand2.py, so much of it is not used to do mirroring.
-"""
-
 def layer_init(layer, std=np.sqrt(2), bias_const=0.0):
     torch.nn.init.orthogonal_(layer.weight, std)
     torch.nn.init.constant_(layer.bias, bias_const)
     return layer
     
-def policy_to_cmd(beta_policy,lower_bounds,upper_bounds):
+def policy_to_cmd1(beta_policy,lower_bounds,upper_bounds):
     """
     This function converts a Beta policy to the corresponding input to be used by the robot
     """
@@ -35,6 +28,7 @@ def policy_to_cmd(beta_policy,lower_bounds,upper_bounds):
     # lower_bounds is a vector of the lower bounds of the input (corresponding to 0 from the policy)
     # upper_bounds is a vector of the upper bounds of the input (corresponding to 1 from the policy)
     # NOTE: assuming that all inputs are of the same length
+
     a = array(lower_bounds)
     b = array(upper_bounds)
     d = b-a
@@ -74,34 +68,45 @@ def HOSM_diff(dt,signal,est_signal,est_deriv,est_deriv2,est_deriv3):
     
     return z0dot, z1dot, z0_next, z1_next, z2_next, z3_next
     
-class Policy(nn.Module): # class for the NN trained in simulation
+class Policy(nn.Module):
     def __init__(self):
         super(Policy, self).__init__()
         self.critic = nn.Sequential(
-            layer_init(nn.Linear(40, 64)),
-            nn.Tanh(),
-            layer_init(nn.Linear(64, 64)),
-            nn.Tanh(),
-            layer_init(nn.Linear(64, 1), std=1.0),
+            layer_init(nn.Linear(24, 100)),
+            nn.ReLU(),
+            layer_init(nn.Linear(100, 50)),
+            nn.ReLU(),
+            layer_init(nn.Linear(50, 25)),
+            nn.ReLU(),
+            layer_init(nn.Linear(25, 1), std=1.0),
         )
-        self.actor_alpha_and_beta = nn.Sequential(
-            layer_init(nn.Linear(40, 64)),
+
+        self.actor_beta = nn.Sequential(
+            layer_init(nn.Linear(24, 100)),
             nn.Tanh(),
-            layer_init(nn.Linear(64, 64)),
+            layer_init(nn.Linear(100, 50)),
             nn.Tanh(),
-            layer_init(nn.Linear(64, 20), std=0.01),
-            nn.Softplus() # lower bound of zero for output
+            layer_init(nn.Linear(50, 25)),
+            nn.Tanh(),
+            layer_init(nn.Linear(25, 10), std=0.01),
+            nn.Softplus(), # lower bound of zero for output
         )
+        self.actor_alpha = nn.Parameter(torch.zeros(1, 10))
 
     def get_angles(self, x):
-        alphas_and_betas = torch.add(self.actor_alpha_and_beta(x),1) # now, alpha, beta values >= 1
-        action_alpha, action_beta = torch.tensor_split(alphas_and_betas, 2, dim=0)
-        probs = Beta(action_alpha, action_beta)
-        #action = probs.sample() # sampled value from Beta dist. will be in [0,1] range
-        action = torch.div(torch.add(action_alpha, -1.0),torch.add(action_alpha,torch.add(action_beta,-2.0)))
-        return action       
-     
-
+        action_beta = torch.add(self.actor_beta(x),2) # now, beta values >= 2
+        #action_logalpha = self.actor_alpha.squeeze()
+        action_alpha = torch.add(self.actor_alpha.squeeze(),2) # now, alpha values >= 2
+        #alphas_and_betas = torch.add(self.actor_alpha_and_beta(x),2) # now, alpha, beta values >= 2
+        #action_alpha, action_beta = torch.tensor_split(alphas_and_betas, 2, dim=0)
+        #probs = Beta(action_alpha, action_beta)
+        #action = probs.sample() # sample from Beta dist. will be in [0,1] range
+        #action = torch.div(torch.add(action_alpha, -0.33333),torch.add(action_alpha,torch.add(action_beta,-0.66666))) #median
+        #action = torch.div(torch.add(action_alpha, -1.0),torch.add(action_alpha,torch.add(action_beta,-2.0))) #mode
+        action = torch.div(action_alpha,torch.add(action_alpha,action_beta)) # mean
+        
+        return action     
+                              
 class Stand:
     """
     Class for making Tobe stand
@@ -114,7 +119,7 @@ class Stand:
         self._th_stand = None
 
         # variables, parameters:
-        self.dt=0.16
+        self.dt=np.round(1.0/6.0, decimals=3)
         self.active = False
         self.push=0 # smoothed z-acceleration value
         self.fore_lean=[0,0,0,0,0] # last 5 'fore_lean' angle values
@@ -127,7 +132,6 @@ class Stand:
         self.s_int=0
         self.fore_data=Vector3()
         self.side_data=Vector3()
-        self.TOBE_cmds=[0.39,-0.39,-0.35,-0.35,0.52,-0.52,0,0,0.16,-0.16,-0.5,0.5,1.74,-1.74,1.11,-1.11,0.18,-0.18]
         
         # differentiation arrays for torso angles:
         self.z0_next=[0,0]
@@ -151,38 +155,18 @@ class Stand:
         self.az_min = 0.1 # push threshold: values less than this are ignored
 
         # subscribers and publishers:
-        self._sub_quat = rospy.Subscriber("/lean", Vector3, self._update_orientation, queue_size=5) # subscribe to lean topic
+        self._sub_quat = rospy.Subscriber("/simlean", Vector3, self._update_orientation, queue_size=5) # subscribe to simlean topic
         self.simlean1 = rospy.Publisher('simlean1', Vector3, queue_size=1)
         self.simlean2 = rospy.Publisher('simlean2', Vector3, queue_size=1)
         self.app_force = rospy.Publisher('rand_force', Float64, queue_size=1)
-
-        # joint command subscribers:
-        self.j1 = rospy.Subscriber("/realtobe/r_shoulder_sagittal/command", Float64, self._updatej1, queue_size=5)
-        self.j2 = rospy.Subscriber("/realtobe/l_shoulder_sagittal/command", Float64, self._updatej2, queue_size=5)
-        self.j3 = rospy.Subscriber("/realtobe/r_shoulder_frontal/command", Float64, self._updatej3, queue_size=5)
-        self.j4 = rospy.Subscriber("/realtobe/l_shoulder_frontal/command", Float64, self._updatej4, queue_size=5)
-        self.j5 = rospy.Subscriber("/realtobe/r_elbow/command", Float64, self._updatej5, queue_size=5)
-        self.j6 = rospy.Subscriber("/realtobe/l_elbow/command", Float64, self._updatej6, queue_size=5)
-        self.j7 = rospy.Subscriber("/realtobe/r_hip_swivel/command", Float64, self._updatej7, queue_size=5)
-        self.j8 = rospy.Subscriber("/realtobe/l_hip_swivel/command", Float64, self._updatej8, queue_size=5)
-        self.j9 = rospy.Subscriber("/realtobe/r_hip_frontal/command", Float64, self._updatej9, queue_size=5)
-        self.j10 = rospy.Subscriber("/realtobe/l_hip_frontal/command", Float64, self._updatej10, queue_size=5)
-        self.j11 = rospy.Subscriber("/realtobe/r_hip_sagittal/command", Float64, self._updatej11, queue_size=5)
-        self.j12 = rospy.Subscriber("/realtobe/l_hip_sagittal/command", Float64, self._updatej12, queue_size=5)
-        self.j13 = rospy.Subscriber("/realtobe/r_knee/command", Float64, self._updatej13, queue_size=5)
-        self.j14 = rospy.Subscriber("/realtobe/l_knee/command", Float64, self._updatej14, queue_size=5)
-        self.j15 = rospy.Subscriber("/realtobe/r_ankle_sagittal/command", Float64, self._updatej15, queue_size=5)
-        self.j16 = rospy.Subscriber("/realtobe/l_ankle_sagittal/command", Float64, self._updatej16, queue_size=5)
-        self.j17 = rospy.Subscriber("/realtobe/r_ankle_frontal/command", Float64, self._updatej17, queue_size=5)
-        self.j18 = rospy.Subscriber("/realtobe/l_ankle_frontal/command", Float64, self._updatej18, queue_size=5)
         
         # load RL policy (high-level control):
         model_dir = "/home/jerry/cleanrl/models/" # CHANGE THIS TO YOUR MODEL DIRECTORY!
         device = torch.device("cuda" if torch.cuda.is_available() and args.cuda else "cpu")
         self.policy = Policy().to(device)
-        #self.policy.load_state_dict(torch.load(f"/home/jerry/cleanrl/models/0812_run1/agent_ep_200.pt", map_location=device))
-        #self.policy.load_state_dict(torch.load(f"/home/jerry/cleanrl/models/1025_run2/agent_ep_8493.pt")) # CHANGE THIS TO YOUR MODEL!
-        #self.policy.eval()
+        #self.policy.load_state_dict(torch.load(f"/home/jerry/cleanrl/models/1220_run2/agent_ep_4857.pt")) # this one works
+        self.policy.load_state_dict(torch.load(f"/home/jerry/cleanrl/models/1221_run1/agent_ep_5597.pt")) # CHANGE THIS TO YOUR MODEL!
+        self.policy.eval()
         
         # switch to 'active' status, move to initial 'home' position, if not already there:
         self.start()
@@ -210,7 +194,7 @@ class Stand:
                 
         #qz=fore # use lean factor instead of lean angle
         #qy=side # use lean factor instead of lean angle
-        qz = math.asin(fore) # convert lean factor to lean angle (inverse sine of z-component of IMU x-axis [which is a unit vector])   
+        qz = math.acos(fore) # convert lean factor to lean angle (inverse cosine of z-component of IMU x-axis [which is a unit vector])   
         qy = math.asin(side) # convert lean factor to lean angle (inverse sine of y-component of IMU x-axis [which is a unit vector]) 
         
         self.fore_lean.pop(0) # remove oldest value from array of five previous lean angle values
@@ -252,51 +236,12 @@ class Stand:
         self.side_data.z=self.s_ddot
         self.simlean2.publish(self.side_data)
 
-    # joint update callbacks:
-    def _updatej1(self, msg):
-        self.TOBE_cmds[0] = msg
-    def _updatej2(self, msg):
-        self.TOBE_cmds[1] = msg        
-    def _updatej3(self, msg):
-        self.TOBE_cmds[2] = msg 
-    def _updatej4(self, msg):
-        self.TOBE_cmds[3] = msg
-    def _updatej5(self, msg):
-        self.TOBE_cmds[4] = msg        
-    def _updatej6(self, msg):
-        self.TOBE_cmds[5] = msg 
-    def _updatej7(self, msg):
-        self.TOBE_cmds[6] = msg
-    def _updatej8(self, msg):
-        self.TOBE_cmds[7] = msg        
-    def _updatej9(self, msg):
-        self.TOBE_cmds[8] = msg 
-    def _updatej10(self, msg):
-        self.TOBE_cmds[9] = msg
-    def _updatej11(self, msg):
-        self.TOBE_cmds[10] = msg        
-    def _updatej12(self, msg):
-        self.TOBE_cmds[11] = msg 
-    def _updatej13(self, msg):
-        self.TOBE_cmds[12] = msg
-    def _updatej14(self, msg):
-        self.TOBE_cmds[13] = msg        
-    def _updatej15(self, msg):
-        self.TOBE_cmds[14] = msg 
-    def _updatej16(self, msg):
-        self.TOBE_cmds[15] = msg
-    def _updatej17(self, msg):
-        self.TOBE_cmds[16] = msg        
-    def _updatej18(self, msg):
-        self.TOBE_cmds[17] = msg 
-
     def start(self):
         if not self.active:
             self.active = True
-            
-            # start standing control loop
             self.init_stand()
-            #rospy.sleep(5) # wait 5 seconds, then start
+            # start standing control loop
+            rospy.sleep(5) # wait 5 seconds, then start
             self._th_stand = Thread(target=self._do_stand)
             self._th_stand.start()
             self.standing = True
@@ -305,29 +250,109 @@ class Stand:
         """
         If not already there yet, go to initial standing position
         """
-        rospy.loginfo("Going to initial stance in Gazebo")
-        self.tobe.command_all_motors(self.TOBE_cmds)
+        rospy.loginfo("Going to initial stance in Gazebo.")
+        cmd=[0.39,-0.39,-0.35,-0.35,0.52,-0.52,0,0,0.16,-0.16,-0.5,0.5,1.74,-1.74,1.11,-1.11,0.18,-0.18]
+        self.tobe.command_all_motors(cmd)
         rospy.loginfo("Now at initial stance position in Gazebo.")
 
     def _do_stand(self):
         """
         Main standing control loop
         """
-        dt=self.dt # approximate dt between data points
         samplerate = 6
+        dt=self.dt # approximate dt between data points
+        
         r = rospy.Rate(samplerate)
-        rospy.loginfo("Started standing thread")
+        rospy.loginfo("Started standing thread in Gazebo")
+        arm_angle_ids = [1,2,3,4,5,6]
         leg_angle_ids = [9,10,11,12,13,14,15,16,17,18]
-               
+        
+        policy = self.policy
+
+        refs_tobe = [0.17,-0.17,-0.5,0.5,1.75,-1.75,1.12,-1.12,0.17,-0.17] # in Gazebo
+        lower_bounds = [-0.3,-0.5,-0.5,-0.5,-0.3,-0.3,-0.5,-0.5,-0.5,-0.3] # in MuJoCo
+        upper_bounds = [0.3,0.5,0.5,0.5,0.3,0.3,0.5,0.5,0.5,0.3] # in MuJoCo
+        
+        #references1 = [-0.2,0.45,-1.7264,-1.1932,-0.21,0.2,-0.45,1.7264,1.1932,0.21]
+        
+        t = 0.0       
         while not rospy.is_shutdown(): 
             # read joint motor positions:
-            #leg_angs = self.tobe.read_leg_angles()          
-            self.tobe.command_all_motors(self.TOBE_cmds)  
-            #rospy.loginfo("Commands: ")
-            #rospy.loginfo(self.TOBE_cmds)                          
+            q = (np.array(self.tobe.read_leg_angles()) - np.array(refs_tobe)) #   
+
+            #q[0] = -q[0] NO
+            #q[1] = -q[1]
+            #q[4] = -q[4]
+            #q[5] = -q[5]
+            #q[6] = -q[6] NO
+            #q[7] = -q[7]
+            #q[8] = -q[8]  
+            #q[9] = -q[9]
+                           
             # compute appropriate joint commands and execute commands: 
             #rospy.loginfo("Fore lean, vel: %d, %d", self.fore_data.x, self.fore_data.y) 
-            #rospy.loginfo("Side lean, vel: %d, %d", self.side_data.x, self.side_data.y)      
+            #rospy.loginfo("Side lean, vel: %d, %d", self.side_data.x, self.side_data.y) 
+            
+            # check for repeating joint angle values:
+            threshold = 0.05
+            for i in range(10): 
+                if (abs(q[i] - self.q0_last1[i])+abs(q[i] - self.q0_last2[i])+abs(q[i] - self.q0_last3[i])+abs(q[i] - self.q0_last4[i])) <= threshold:
+                    # reset differentiator if past four values are very near the current joint angle value:
+                    self.q0_next[i] = q[i]
+                    self.q1_next[i] = 0.0
+                    self.q2_next[i] = 0.0
+                    self.q3_next[i] = 0.0 
+            
+            self.q0_last1=q
+            self.q0_last2=self.q0_last1
+            self.q0_last3=self.q0_last2
+            self.q0_last4=self.q0_last3
+      
+            q0 = self.q0_next
+            q1 = self.q1_next
+            q2 = self.q2_next
+            q3 = self.q3_next
+            [joint_vels, q1dot,self.q0_next,self.q1_next,self.q2_next,self.q3_next] = HOSM_diff(dt, q, q0, q1, q2, q3)
+
+            y = joint_vels
+            state = [q[0],q[2],q[4],q[6],q[8],q[1],q[3],q[5],q[7],q[9],y[0],y[2],y[4],y[6],y[8],y[1],y[3],y[5],y[7],y[9],self.fore_data.x, self.side_data.x,self.fore_data.y, self.side_data.y] 
+            state1 = np.round(state, decimals=3)
+            
+            # update state vector
+            obs_array = np.array(state1) # create observation array
+            obs = torch.Tensor(obs_array) # convert observation array to Tensor
+            
+            # compute appropriate joint commands and execute commands: 
+            #response = policy.get_angles(obs) # use RL policy to get 10 x 1 action output
+            
+            # test control inputs:
+            
+            if t >= 60.0:
+                response = torch.Tensor(np.array([0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5]))
+            elif t >= 55.0:
+                response = torch.Tensor(np.array([0.5,0.5,0.5,0.5,0.8,0.5,0.5,0.5,0.5,0.2]))
+            elif t >= 50.0:
+                response = torch.Tensor(np.array([0.5,0.5,0.3,0.3,0.8,0.5,0.5,0.7,0.7,0.2]))
+            elif t >= 45.0:
+                response = torch.Tensor(np.array([0.5,0.5,0.7,0.7,0.8,0.5,0.5,0.3,0.3,0.2]))
+            elif t >= 40.0:
+                response = torch.Tensor(np.array([0.7,0.5,0.5,0.5,0.8,0.3,0.5,0.5,0.5,0.2]))
+            elif t >= 35.0:
+                response = torch.Tensor(np.array([0.3,0.5,0.5,0.5,0.8,0.7,0.5,0.5,0.5,0.2]))
+            elif t >= 30.0:
+                response = torch.Tensor(np.array([0.3,0.5,0.5,0.5,0.2,0.7,0.5,0.5,0.5,0.8]))
+            elif t >= 25:
+                response = torch.Tensor(np.array([0.5,0.5,0.5,0.5,0.2,0.5,0.5,0.5,0.5,0.8]))
+            else:
+                response = torch.Tensor(np.array([0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5]))
+            
+            ctrl = policy_to_cmd1(response,lower_bounds,upper_bounds)
+            response_in_radians = np.array(refs_tobe) + ctrl # convert output of RL policy to joint angle command in radians             
+
+            self.tobe.command_leg_motors(response_in_radians)
+            #rospy.loginfo(q)              
+             
+            t += dt
             r.sleep()
         rospy.loginfo("Finished standing control thread")
 	

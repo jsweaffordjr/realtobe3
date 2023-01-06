@@ -4,8 +4,8 @@ from threading import Thread
 import rospy
 import math
 import numpy as np
-from tobe3_real.tobesim import Tobe
-from tobe3_real.stand2 import Stand
+from tobe3_real.tobe import Tobe
+from tobe3_real.mirror_gazebo import Stand
 from geometry_msgs.msg import Vector3
 
 
@@ -13,9 +13,9 @@ if __name__ == "__main__":
     rospy.init_node("Tobe Robot")
     rospy.sleep(1)
 
-    rospy.loginfo("Instantiating Simulated Tobe Client")
+    rospy.loginfo("Instantiating Tobe Client")
     tobe = Tobe()
-    rospy.loginfo("Instantiating Standing Protocol for SimTobe")
+    rospy.loginfo("Instantiating Mirroring Protocol for Tobe")
     stand = Stand(tobe)
 
     while not rospy.is_shutdown():

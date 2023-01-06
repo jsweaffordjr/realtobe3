@@ -65,13 +65,13 @@ class Tobe:
         self._pub_joints["r_hip_lateral_joint"].publish(angs[0])
         self._pub_joints["l_hip_lateral_joint"].publish(angs[1])
         self._pub_joints["r_hip_swing_joint"].publish(angs[2])
-        self._pub_joints["l_hip_swing_joint"].publish(angs[11])
-        self._pub_joints["r_knee_joint"].publish(angs[12])
-        self._pub_joints["l_knee_joint"].publish(angs[13])
-        self._pub_joints["r_ankle_swing_joint"].publish(angs[14])
-        self._pub_joints["l_ankle_swing_joint"].publish(angs[15])
-        self._pub_joints["r_ankle_lateral_joint"].publish(angs[16])
-        self._pub_joints["l_ankle_lateral_joint"].publish(angs[17])
+        self._pub_joints["l_hip_swing_joint"].publish(angs[3])
+        self._pub_joints["r_knee_joint"].publish(angs[4])
+        self._pub_joints["l_knee_joint"].publish(angs[5])
+        self._pub_joints["r_ankle_swing_joint"].publish(angs[6])
+        self._pub_joints["l_ankle_swing_joint"].publish(angs[7])
+        self._pub_joints["r_ankle_lateral_joint"].publish(angs[8])
+        self._pub_joints["l_ankle_lateral_joint"].publish(angs[9])
     
     def command_sag_motors(self,angs):
         # this function sends commands to the motors for sagittal shoulders (ID:1,2), hips (11,12), knees (13,14) and ankles (15,16) by publishing the commanded angles to the corresponding publisher topics:

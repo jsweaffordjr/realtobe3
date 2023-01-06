@@ -12,12 +12,20 @@
   <include file="$(find tobe_control)/launch/tobe_control.launch"/>
   
   <node name="stand_tobe_sim" pkg="tobe3_real" type="simtobe_stand.py" output="screen"/>
-  
+    
   <node name="process_raw_data" pkg="tobe3_real" type="simdata_output.py" output="screen"/>
   
   <node pkg="rosservice" type="rosservice" name="set_joints" args="call --wait /gazebo/set_model_configuration '{model_name: tobe, joint_names:['r_shoulder_swing_joint','l_shoulder_swing_joint','r_shoulder_lateral_joint','l_shoulder_lateral_joint','r_elbow_joint','l_elbow_joint', 'r_hip_lateral_joint','l_hip_lateral_joint','r_hip_swing_joint','l_hip_swing_joint','r_knee_joint','l_knee_joint','r_ankle_swing_joint', 'l_ankle_swing_joint','r_ankle_lateral_joint','l_ankle_lateral_joint'], joint_positions: [0.39,-0.39,-0.35,-0.35,0.52,-0.52,0.16,-0.16,-0.5,0.5,1.74,-1.74,1.11,-1.11,0.18,-0.18]}'"/>
-
+  
   <arg name = "start_physics_delay" default="5.0" />
   <node pkg="rosservice" type="rosservice" name="start_physics" launch-prefix="bash -c 'sleep $(arg start_physics_delay); $0 $@' " args="call --wait /gazebo/unpause_physics"/>
+  
+  <node name="tobe_mirrors_gazebo" pkg="tobe3_real" type="tobe_mirrors_gazebo.py" output="screen"/> 
+      
+  <node name="read_IMU" pkg="tobe3_real" type="arduino_read1.py" output="screen"/>
+  
+  <node name="detect_lean" pkg="tobe3_real" type="lean_detect.py" output="screen"/>
+  
+  <node name="plot_realtime" pkg="tobe3_real" type="realtime_plot.py" output="screen"/>
 
 </launch>

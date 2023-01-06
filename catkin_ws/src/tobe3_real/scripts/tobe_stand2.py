@@ -5,7 +5,7 @@ import rospy
 import math
 import numpy as np
 from tobe3_real.tobe import Tobe
-from tobe3_real.stand1 import Stand
+from tobe3_real.stand2 import Stand
 from geometry_msgs.msg import Vector3
 
 
