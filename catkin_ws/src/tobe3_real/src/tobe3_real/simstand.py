@@ -130,8 +130,8 @@ class Stand:
         self.s_deriv=0
         self.s_ddot=0
         self.s_int=0
-        self.fore_data=Vector3()
-        self.side_data=Vector3()
+        self.fore_angle=0.0
+        self.side_angle=0.0
         
         # differentiation arrays for torso angles:
         self.z0_next=[0,0]
@@ -139,25 +139,25 @@ class Stand:
         self.z2_next=[0,0]
         self.z3_next=[0,0]
         
-        # differentiation arrays for joint angles:
-        self.q0_next=[0,0,0,0,0,0,0,0,0,0]
-        self.q1_next=[0,0,0,0,0,0,0,0,0,0]
-        self.q2_next=[0,0,0,0,0,0,0,0,0,0]
-        self.q3_next=[0,0,0,0,0,0,0,0,0,0]
+        # differentiation arrays for joint angles, torso angles:
+        self.q0_next=[0,0,0,0,0,0,0,0,0,0,0,0]
+        self.q1_next=[0,0,0,0,0,0,0,0,0,0,0,0]
+        self.q2_next=[0,0,0,0,0,0,0,0,0,0,0,0]
+        self.q3_next=[0,0,0,0,0,0,0,0,0,0,0,0]
         
         # reset arrays for joint angles (used to reset differentiators when joint angle values don't change within 5 timesteps):
-        self.q0_last1=[0,0,0,0,0,0,0,0,0,0]
-        self.q0_last2=[0,0,0,0,0,0,0,0,0,0]
-        self.q0_last3=[0,0,0,0,0,0,0,0,0,0]
-        self.q0_last4=[0,0,0,0,0,0,0,0,0,0]
+        self.q0_last1=[0,0,0,0,0,0,0,0,0,0,0,0]
+        self.q0_last2=[0,0,0,0,0,0,0,0,0,0,0,0]
+        self.q0_last3=[0,0,0,0,0,0,0,0,0,0,0,0]
+        self.q0_last4=[0,0,0,0,0,0,0,0,0,0,0,0]
         
         self.lean_min = 0.02 # lean threshold: values less than this (~1.15 deg.) are ignored
         self.az_min = 0.1 # push threshold: values less than this are ignored
 
         # subscribers and publishers:
         self._sub_quat = rospy.Subscriber("/simlean", Vector3, self._update_orientation, queue_size=5) # subscribe to simlean topic
-        self.simlean1 = rospy.Publisher('simlean1', Vector3, queue_size=1)
-        self.simlean2 = rospy.Publisher('simlean2', Vector3, queue_size=1)
+        self.simlean1 = rospy.Publisher('simlean1', Float64, queue_size=1)
+        self.simlean2 = rospy.Publisher('simlean2', Float64, queue_size=1)
         self.app_force = rospy.Publisher('rand_force', Float64, queue_size=1)
         
         # load RL policy (high-level control):
@@ -175,66 +175,28 @@ class Stand:
         """
         Catches lean angle data and updates robot orientation
         """
-        fore = msg.z # get z-(i.e., forward/backward direction)component of initially vertical x-axis
+        fore = msg.x # get x-(i.e., forward/backward direction)component of initially vertical x-axis
         side = msg.y # get y-(i.e., left/right direction)component of initially vertical x-axis
         if abs(fore) < self.lean_min: # apply threshold
             fore = 0
-            if sum(self.fore_lean[1:]) == 0:
-                self.f_int = 0 # reset integrator if past five values are zero
-                self.z0_next[0]=0.0 # reset differentiators also...
-                self.z1_next[0]=0.0
-                self.z2_next[0]=0.0
         if abs(side) < self.lean_min: # apply threshold
             side = 0
-            if sum(self.side_lean[1:]) == 0:
-                self.s_int = 0 # reset integrator if past five values are zero
-                self.z0_next[1]=0.0 # reset differentiators also...
-                self.z1_next[1]=0.0
-                self.z2_next[1]=0.0
                 
         #qz=fore # use lean factor instead of lean angle
         #qy=side # use lean factor instead of lean angle
-        qz = math.acos(fore) # convert lean factor to lean angle (inverse cosine of z-component of IMU x-axis [which is a unit vector])   
-        qy = math.asin(side) # convert lean factor to lean angle (inverse sine of y-component of IMU x-axis [which is a unit vector]) 
+        qz = math.asin(-fore) # convert lean factor to lean angle (inverse sine of z-component of IMU x-axis [which is a unit vector])   
+        qy = math.asin(-side) # convert lean factor to lean angle (inverse sine of y-component of IMU x-axis [which is a unit vector]) 
         
         self.fore_lean.pop(0) # remove oldest value from array of five previous lean angle values
         self.side_lean.pop(0) # remove oldest value from array of five previous lean angle values
         self.fore_lean.append(qz) # append newest value to end of the array
         self.side_lean.append(qy) # append newest value to end of the array
-   
-        # derivative and integral estimates:
-        dt=self.dt # approximate dt between data points
-        
-        # update integrals:
-        area1=0.5*dt*(self.fore_lean[3]+self.fore_lean[4]) # trapezoidal integration between two values
-        prev1=self.f_int # get previous value of integral
-        self.f_int=prev1+area1 # updated integral value
-        
-        area2=0.5*dt*(self.side_lean[3]+self.side_lean[4]) # trapezoidal integration between two values
-        prev2=self.s_int # get previous value of integral
-        self.s_int=prev2+area2 # updated integral value
-
-        # HDD output:
-        q = [qz,qy]
-        z0 = self.z0_next
-        z1 = self.z1_next
-        z2 = self.z2_next
-        z3 = self.z3_next
-        [z0dot, z1dot,self.z0_next,self.z1_next,self.z2_next,self.z3_next] = HOSM_diff(dt, q, z0, z1, z2, z3)
-        self.f_deriv = z0dot[0]
-        self.s_deriv = z0dot[1]
-        self.f_ddot = z1dot[0]
-        self.s_ddot = z1dot[1]
         
         # assign lean angle and derivative(s) and/or integral:
-        self.fore_data.x=qz
-        self.fore_data.y=self.f_deriv
-        self.fore_data.z=self.f_ddot
-        self.simlean1.publish(self.fore_data)
-        self.side_data.x=qy
-        self.side_data.y=self.s_deriv
-        self.side_data.z=self.s_ddot
-        self.simlean2.publish(self.side_data)
+        self.fore_angle=qz
+        self.simlean1.publish(self.fore_angle)
+        self.side_angle=qy
+        self.simlean2.publish(self.side_angle)
 
     def start(self):
         if not self.active:
@@ -278,30 +240,21 @@ class Stand:
         t = 0.0       
         while not rospy.is_shutdown(): 
             # read joint motor positions:
-            q = (np.array(self.tobe.read_leg_angles()) - np.array(refs_tobe)) #   
-
-            #q[0] = -q[0] NO
-            #q[1] = -q[1]
-            #q[4] = -q[4]
-            #q[5] = -q[5]
-            #q[6] = -q[6] NO
-            #q[7] = -q[7]
-            #q[8] = -q[8]  
-            #q[9] = -q[9]
-                           
-            # compute appropriate joint commands and execute commands: 
-            #rospy.loginfo("Fore lean, vel: %d, %d", self.fore_data.x, self.fore_data.y) 
-            #rospy.loginfo("Side lean, vel: %d, %d", self.side_data.x, self.side_data.y) 
+            joint_angs = np.round(np.array(self.tobe.read_leg_angles()) - np.array(refs_tobe), decimals=3) #   
+            torso_angs = np.array([self.fore_angle, self.side_angle])       
+            q = np.concatenate((joint_angs, torso_angs))
             
-            # check for repeating joint angle values:
+            # check for repeating joint angle/torso angle values:
             threshold = 0.05
-            for i in range(10): 
+            for i in range(12): 
                 if (abs(q[i] - self.q0_last1[i])+abs(q[i] - self.q0_last2[i])+abs(q[i] - self.q0_last3[i])+abs(q[i] - self.q0_last4[i])) <= threshold:
                     # reset differentiator if past four values are very near the current joint angle value:
                     self.q0_next[i] = q[i]
                     self.q1_next[i] = 0.0
                     self.q2_next[i] = 0.0
                     self.q3_next[i] = 0.0 
+            
+            vels = (q - self.q0_last1)/(1.0/samplerate)
             
             self.q0_last1=q
             self.q0_last2=self.q0_last1
@@ -312,10 +265,11 @@ class Stand:
             q1 = self.q1_next
             q2 = self.q2_next
             q3 = self.q3_next
-            [joint_vels, q1dot,self.q0_next,self.q1_next,self.q2_next,self.q3_next] = HOSM_diff(dt, q, q0, q1, q2, q3)
+            [vels1, q1dot,self.q0_next,self.q1_next,self.q2_next,self.q3_next] = HOSM_diff(dt, q, q0, q1, q2, q3)
 
-            y = joint_vels
-            state = [q[0],q[2],q[4],q[6],q[8],q[1],q[3],q[5],q[7],q[9],y[0],y[2],y[4],y[6],y[8],y[1],y[3],y[5],y[7],y[9],self.fore_data.x, self.side_data.x,self.fore_data.y, self.side_data.y] 
+            
+            y = vels
+            state = [q[0],q[2],q[4],q[6],q[8],q[1],q[3],q[5],q[7],q[9],y[0],y[2],y[4],y[6],y[8],y[1],y[3],y[5],y[7],y[9],self.fore_angle, self.side_angle,y[10], y[11]] 
             state1 = np.round(state, decimals=3)
             
             # update state vector
@@ -327,21 +281,29 @@ class Stand:
             
             # test control inputs:
             
-            if t >= 60.0:
-                response = torch.Tensor(np.array([0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5]))
-            elif t >= 55.0:
+            if t >= 70.0:
+                rospy.loginfo('Final phase: ')
+                response = torch.Tensor(np.array([0.5,0.45,0.5,0.5,0.5,0.5,0.55,0.5,0.5,0.5]))
+            elif t >= 65.0:
+                rospy.loginfo('Phase 7: ')
                 response = torch.Tensor(np.array([0.5,0.5,0.5,0.5,0.8,0.5,0.5,0.5,0.5,0.2]))
-            elif t >= 50.0:
+            elif t >= 60.0:
+                rospy.loginfo('Phase 6: ')
                 response = torch.Tensor(np.array([0.5,0.5,0.3,0.3,0.8,0.5,0.5,0.7,0.7,0.2]))
-            elif t >= 45.0:
+            elif t >= 55.0:
+                rospy.loginfo('Phase 5: ')
                 response = torch.Tensor(np.array([0.5,0.5,0.7,0.7,0.8,0.5,0.5,0.3,0.3,0.2]))
-            elif t >= 40.0:
+            elif t >= 50.0:
+                rospy.loginfo('Phase 4: ')
                 response = torch.Tensor(np.array([0.7,0.5,0.5,0.5,0.8,0.3,0.5,0.5,0.5,0.2]))
-            elif t >= 35.0:
+            elif t >= 45.0:
+                rospy.loginfo('Phase 3: ')
                 response = torch.Tensor(np.array([0.3,0.5,0.5,0.5,0.8,0.7,0.5,0.5,0.5,0.2]))
-            elif t >= 30.0:
+            elif t >= 40.0:
+                rospy.loginfo('Phase 2: ')
                 response = torch.Tensor(np.array([0.3,0.5,0.5,0.5,0.2,0.7,0.5,0.5,0.5,0.8]))
-            elif t >= 25:
+            elif t >= 35:
+                rospy.loginfo('Phase 1: ')
                 response = torch.Tensor(np.array([0.5,0.5,0.5,0.5,0.2,0.5,0.5,0.5,0.5,0.8]))
             else:
                 response = torch.Tensor(np.array([0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5]))
@@ -350,7 +312,7 @@ class Stand:
             response_in_radians = np.array(refs_tobe) + ctrl # convert output of RL policy to joint angle command in radians             
 
             self.tobe.command_leg_motors(response_in_radians)
-            #rospy.loginfo(q)              
+            rospy.loginfo(obs_array)              
              
             t += dt
             r.sleep()

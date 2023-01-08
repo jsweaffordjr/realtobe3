@@ -15,17 +15,17 @@ class Visualizer:
         self.calib=False
         rospy.sleep(5)
         self.sub_cal=rospy.Subscriber('/calibration',Vector3,self._calibrate, queue_size=1)
-        #while self.calib == False:
-        #    rospy.sleep(0.1)
+        while self.calib == False:
+            rospy.sleep(0.1)
         rospy.sleep(10) 
         
         # plot initialization:
-        self.fig, (self.ax1, self.ax2) = plt.subplots(2, sharex=True)
+        self.fig, (self.ax1, self.ax2, self.ax3, self.ax4) = plt.subplots(4, sharex=True)
         self.fig.set_size_inches(10, 10)
-        #self.a1, = self.ax1.plot([], [], label='Forward lean angle', color='black')
-        #self.a2, = self.ax1.plot([], [], label='Forward lean rate', color='red')
-        #self.a3, = self.ax2.plot([], [], label='Side lean angle', color='black')
-        #self.a4, = self.ax2.plot([], [], label='Side lean rate', color='red')
+        self.a1, = self.ax3.plot([], [], label='Forward lean angle', color='black')
+        self.a2, = self.ax3.plot([], [], label='Forward lean rate', color='red', linestyle='dashed')
+        self.a3, = self.ax4.plot([], [], label='Side lean angle', color='black')
+        self.a4, = self.ax4.plot([], [], label='Side lean rate', color='red', linestyle='dashed')
         self.a5, = self.ax2.plot([], [], label='R fro. hip', color='green')
         self.a6, = self.ax1.plot([], [], label='R sag. hip', color='red')
         self.a7, = self.ax1.plot([], [], label='R knee', color='black')
@@ -73,25 +73,30 @@ class Visualizer:
         self.ax1.legend(loc='center left')
         self.ax2.set_title('Frontal joint angles')
         self.ax2.set_xlim(0,self.plot_length)
-        self.ax2.set_ylim(-1.5,1.5)
+        self.ax2.set_ylim(-1,1)
         self.ax2.legend(loc='center left')
-        #self.ax3.set_title('Current joint angles')
-        #self.ax3.set_xlim(0,self.plot_length)
-        #self.ax3.set_ylim(-2,2)
-        #self.ax3.legend(loc='center left')
+        self.ax3.set_title('Torso angle [backward (+)] and rate')
+        self.ax3.set_xlim(0,self.plot_length)
+        self.ax3.set_ylim(-0.5,0.5)
+        self.ax3.legend(loc='center left')
+        self.ax4.set_title('Torso angle [right (+)] and rate')
+        self.ax4.set_xlim(0,self.plot_length)
+        self.ax4.set_ylim(-0.5,0.5)
+        self.ax4.legend(loc='center left')
         return self.ax1, self.ax2 #, self.ax3        
 
     def update_plot_length(self):
         self.ax1.set_xlim(self.t_start,self.t_end)
         self.ax2.set_xlim(self.t_start,self.t_end)
-        #self.ax3.set_xlim(self.t_start,self.t_end)
-        return self.ax1, self.ax2 #, self.ax3  
+        self.ax3.set_xlim(self.t_start,self.t_end)
+        self.ax4.set_xlim(self.t_start,self.t_end)
+        return self.ax1, self.ax2, self.ax3  
                 
     def plot_update(self, frame):
-        #self.a1.set_data(self.t21,self.forward_lean)
-        #self.a2.set_data(self.t21,self.forward_lean_dot)
-        #self.a3.set_data(self.t22,self.side_lean)
-        #self.a4.set_data(self.t22,self.side_lean_dot)
+        self.a1.set_data(self.t21,self.forward_lean)
+        self.a2.set_data(self.t21,self.forward_lean_dot)
+        self.a3.set_data(self.t22,self.side_lean)
+        self.a4.set_data(self.t22,self.side_lean_dot)
         self.a5.set_data(self.t1,self.r_f_hip)
         self.a6.set_data(self.t2,self.r_s_hip)
         self.a7.set_data(self.t3,self.r_knee)
@@ -113,7 +118,7 @@ class Visualizer:
         self.a23.set_data(self.t19,self.l_s_ankle_cmd)
         self.a24.set_data(self.t20,self.r_f_ankle_cmd)
         self.update_plot_length() # comment out if scrolling plot is not desired
-        return self.a5, self.a6, self.a7, self.a8, self.a9, self.a10, self.a11, self.a12, self.a13, self.a14, self.a15, self.a16, self.a17, self.a18, self.a19, self.a20, self.a21, self.a22, self.a23, self.a24 #, self.a1, self.a2, self.a3, self.a4
+        return self.a5, self.a6, self.a7, self.a8, self.a9, self.a10, self.a11, self.a12, self.a13, self.a14, self.a15, self.a16, self.a17, self.a18, self.a19, self.a20, self.a21, self.a22, self.a23, self.a24, self.a1, self.a2, self.a3, self.a4
 
         
     def ldata_callback1(self, msg):
@@ -128,6 +133,8 @@ class Visualizer:
             self.t21.pop(0)
             self.forward_lean.pop(0)
             self.forward_lean_dot.pop(0)
+            self.t_end=tnow
+            self.t_start=tnow-self.plot_length
 
     def ldata_callback2(self, msg):
         tnow=rospy.get_time()-self.initial_time
@@ -152,8 +159,6 @@ class Visualizer:
         if tnow > self.plot_length: 
             self.t1.pop(0)
             self.r_f_hip.pop(0)
-            self.t_end=tnow
-            self.t_start=tnow-self.plot_length
         
     def r_s_hip_callback(self, msg):
         tnow=rospy.get_time()-self.initial_time

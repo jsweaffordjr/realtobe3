@@ -139,8 +139,8 @@ class Stand:
                 
         #qz=fore # use lean factor instead of lean angle
         #qy=side # use lean factor instead of lean angle
-        qz = math.asin(fore) # convert lean factor to lean angle (inverse sine of z-component of IMU x-axis [which is a unit vector])   
-        qy = math.asin(side) # convert lean factor to lean angle (inverse sine of y-component of IMU x-axis [which is a unit vector]) 
+        qz = math.asin(-fore) # convert lean factor to lean angle (inverse sine of z-component of IMU x-axis [which is a unit vector])   
+        qy = math.asin(-side) # convert lean factor to lean angle (inverse sine of y-component of IMU x-axis [which is a unit vector]) 
         
         self.fore_lean.pop(0) # remove oldest value from array of five previous lean angle values
         self.side_lean.pop(0) # remove oldest value from array of five previous lean angle values
@@ -166,10 +166,11 @@ class Stand:
         z2 = self.z2_next
         z3 = self.z3_next
         [z0dot, z1dot,self.z0_next,self.z1_next,self.z2_next,self.z3_next] = HOSM_diff(dt, q, z0, z1, z2, z3)
-        self.f_deriv = z0dot[0]
-        self.s_deriv = z0dot[1]
+        self.f_deriv = (qz - z0[0])/self.dt
+        self.s_deriv = (qy - z0[1])/self.dt
         self.f_ddot = z1dot[0]
         self.s_ddot = z1dot[1]
+        self.z0_next = q
         
         # assign lean angle and derivative(s) and/or integral:
         self.fore_data.x=qz
@@ -219,8 +220,8 @@ class Stand:
             self.init_stand()
             
             # pause until 10 seconds after IMU is calibrated:
-            #while self.calib == False:
-            #    rospy.sleep(0.1)
+            while self.calib == False:
+                rospy.sleep(0.1)
             rospy.sleep(10) 
             
             # start standing control loop
@@ -279,7 +280,7 @@ class Stand:
             self.tobe.command_leg_motors(leg_ang_cmds)
             
             # on-screen feedback:
-            rospy.loginfo(self.TOBE_cmds) 
+            #rospy.loginfo(self.TOBE_cmds) 
             #rospy.loginfo(leg_angs)
             
             # send commands to motors and record command angle (in radians)
