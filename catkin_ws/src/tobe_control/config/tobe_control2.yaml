@@ -1,0 +1,91 @@
+tobe:
+  # Publish all joint states -----------------------------------
+  joint_state_controller:
+    type: joint_state_controller/JointStateController
+    publish_rate: 50  
+  
+  # Position Controllers ---------------------------------------
+
+  # LEFT ARM
+
+  l_shoulder_swing_joint_torque_controller:
+    type: effort_controllers/JointEffortController
+    joint: l_shoulder_swing_joint
+
+  l_shoulder_lateral_joint_torque_controller:
+    type: effort_controllers/JointEffortController
+    joint: l_shoulder_lateral_joint
+
+  l_elbow_joint_torque_controller:
+    type: effort_controllers/JointEffortController
+    joint: l_elbow_joint
+
+  # RIGHT ARM
+
+  r_shoulder_swing_joint_torque_controller:
+    type: effort_controllers/JointEffortController
+    joint: r_shoulder_swing_joint
+
+  r_shoulder_lateral_joint_torque_controller:
+    type: effort_controllers/JointEffortController
+    joint: r_shoulder_lateral_joint
+
+  r_elbow_joint_torque_controller:
+    type: effort_controllers/JointEffortController
+    joint: r_elbow_joint
+
+
+  # LEFT LEG
+
+  l_hip_twist_joint_torque_controller:
+    type: effort_controllers/JointEffortController
+    joint: l_hip_twist_joint
+
+  l_hip_lateral_joint_torque_controller:
+    type: effort_controllers/JointEffortController
+    joint: l_hip_lateral_joint
+
+  l_hip_swing_joint_torque_controller:
+    type: effort_controllers/JointEffortController
+    joint: l_hip_swing_joint
+
+  l_knee_joint_torque_controller:
+    type: effort_controllers/JointEffortController
+    joint: l_knee_joint
+
+  l_ankle_swing_joint_torque_controller:
+    type: effort_controllers/JointEffortController
+    joint: l_ankle_swing_joint
+
+  l_ankle_lateral_joint_torque_controller:
+    type: effort_controllers/JointEffortController
+    joint: l_ankle_lateral_joint
+
+
+  # RIGHT LEG
+
+  r_hip_twist_joint_torque_controller:
+    type: effort_controllers/JointEffortController
+    joint: r_hip_twist_joint
+
+  r_hip_lateral_joint_torque_controller:
+    type: effort_controllers/JointEffortController
+    joint: r_hip_lateral_joint
+
+  r_hip_swing_joint_torque_controller:
+    type: effort_controllers/JointEffortController
+    joint: r_hip_swing_joint
+
+  r_knee_joint_torque_controller:
+    type: effort_controllers/JointEffortController
+    joint: r_knee_joint
+
+  r_ankle_swing_joint_torque_controller:
+    type: effort_controllers/JointEffortController
+    joint: r_ankle_swing_joint
+
+  r_ankle_lateral_joint_torque_controller:
+    type: effort_controllers/JointEffortController
+    joint: r_ankle_lateral_joint
+
+

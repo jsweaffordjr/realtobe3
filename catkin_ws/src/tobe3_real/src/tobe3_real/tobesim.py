@@ -36,8 +36,13 @@ class Tobe:
         if self.joints is None:
             self.joints=msg.name
         
+        torques = np.zeros(18)
         for k in range(len(self.joints)):   
-            self.angles[self.joints[k]]=msg.position[k]            
+            self.angles[self.joints[k]]=msg.position[k]   
+            torques[k] = msg.effort[k]  
+        #rospy.loginfo("Swing ankle torque: "+str(torques[10]))
+        #rospy.loginfo("Swing ankle angle: "+str(msg.position[10]))  
+             
         
     def command_all_motors(self,angs):
         # this sends motor commands to all joints by publishing commanded joint angles to all 18 topics

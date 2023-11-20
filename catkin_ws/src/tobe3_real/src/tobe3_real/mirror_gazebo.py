@@ -291,3 +291,11 @@ class Stand:
 	
         self._th_walk = None
 
+
+
+
+
+
+
+
+

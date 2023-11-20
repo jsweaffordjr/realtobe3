@@ -157,6 +157,29 @@ class Tobe:
         self.motor15.set_position(int(cmds[6]))
         self.motor16.set_position(int(cmds[7]))
     
+    def read_all_motor_positions(self):
+        # this function reads the motor positions for all joints
+        p01=self.motor01.get_position()
+        p02=self.motor02.get_position()
+        p03=self.motor03.get_position()
+        p04=self.motor04.get_position()
+        p05=self.motor05.get_position()
+        p06=self.motor06.get_position()
+        p07=self.motor07.get_position()
+        p08=self.motor08.get_position()
+        p09=self.motor09.get_position()
+        p10=self.motor10.get_position()
+        p11=self.motor11.get_position()
+        p12=self.motor12.get_position()
+        p13=self.motor13.get_position()
+        p14=self.motor14.get_position()
+        p15=self.motor15.get_position()
+        p16=self.motor16.get_position()
+        p17=self.motor17.get_position()
+        p18=self.motor18.get_position()
+        p=[p01,p02,p03,p04,p05,p06,p07,p08,p09,p10,p11,p12,p13,p14,p15,p16,p17,p18]
+        return p
+    
     def read_leg_motor_positions(self):
         # this function reads the motor positions for the leg joints
         p1=self.motor09.get_position()
@@ -183,6 +206,32 @@ class Tobe:
         p7=self.motor15.get_position()
         p8=self.motor16.get_position()
         p=[p1,p2,p3,p4,p5,p6,p7,p8]
+        return p
+    
+    def read_arm_motor_positions(self):
+        # this function reads the motor positions for the arm joints
+        p1=self.motor01.get_position()
+        p2=self.motor02.get_position()
+        p3=self.motor03.get_position()
+        p4=self.motor04.get_position()
+        p5=self.motor05.get_position()
+        p6=self.motor06.get_position()
+        p=[p1,p2,p3,p4,p5,p6]
+        return p
+        
+    def read_right_arm_motor_positions(self):
+        # this function reads the motor positions for the arm joints
+        p1=self.motor01.get_position() # sag. shoulder
+        p2=self.motor03.get_position() # frontal shoulder
+        p3=self.motor05.get_position() # elbow
+        p=[p1,p2,p3]
+        return p
+        
+    def read_right_sag_arm_motor_positions(self):
+        # this function reads the motor positions for the arm joints
+        p1=self.motor01.get_position()
+        p2=self.motor05.get_position()
+        p=[p1,p2]
         return p
     
     def publish_arm_cmds(self,angs):

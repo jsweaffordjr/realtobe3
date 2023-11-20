@@ -1,6 +1,6 @@
 <launch>
 
-  <param name="robot_description" textfile="$(find tobe_description)/tobe.urdf" /> 
+  <param name="robot_description" textfile="$(find tobe_description)/tobe_torque.urdf" /> 
 
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
     <arg name="world_name" value="$(find tobe_description)/world/tobe_world.world" />
@@ -9,9 +9,9 @@
     
   </include>
   
-  <include file="$(find tobe_control)/launch/tobe_control.launch"/>
+  <include file="$(find tobe_control)/launch/tobe_control2.launch"/>
   
-  <node name="stand_tobe_sim" pkg="tobe3_real" type="simtobe_stand.py" output="screen"/>
+  <node name="stand_tobe_sim" pkg="tobe3_real" type="simtobe_stand2.py" output="screen"/>
   
   <node name="process_raw_data" pkg="tobe3_real" type="simdata_output.py" output="screen"/>
   
@@ -19,5 +19,8 @@
 
   <arg name = "start_physics_delay" default="5.0" />
   <node pkg="rosservice" type="rosservice" name="start_physics" launch-prefix="bash -c 'sleep $(arg start_physics_delay); $0 $@' " args="call --wait /gazebo/unpause_physics"/>
+  
+  <arg name = "apply_force_delay" default="8.0" />
+  <node name="apply_force" pkg="tobe3_real" type="test_force.py" launch-prefix="bash -c 'sleep $(arg apply_force_delay); $0 $@' " output="screen" />
 
 </launch>

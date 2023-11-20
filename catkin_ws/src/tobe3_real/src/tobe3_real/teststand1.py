@@ -188,7 +188,7 @@ class Stand:
         self._th_stand = None
 
         # variables, parameters:
-        self.dt=0.16
+        self.dt=0.15
         self.active = False        
         
         # load RL policy (high-level control):
@@ -234,34 +234,37 @@ class Stand:
         leg_angle_ids = [9,10,11,12,13,14,15,16,17,18]
         typical_leg_angs = np.array([0.1612,-0.1663,-0.499,0.5195,1.7479,-1.7274,1.1132,-1.103,0.1817,-0.1971])
         
-        # observation array
-        policy = self.policy    
-        state1 = [0.1612,-0.499,1.7479,1.1132,0.1817,-0.1663,0.5093,-1.7274,-1.103,-0.1971,0.0,0.0] # joint angle vector + first 2 from joint_vel vector
-        state2 = [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0] # remainder of state
+        while not rospy.is_shutdown():
         
-        # update state vector
-        state = np.array([state1,state2]) # combine into state array
-        obs_array = state.flatten() # flatten state into observation array
-        obs = torch.Tensor(obs_array) # convert observation array to Tensor
+            # observation array
+            #policy = self.policy    
+            #state1 = [0.1612,-0.499,1.7479,1.1132,0.1817,-0.1663,0.5093,-1.7274,-1.103,-0.1971,0.0,0.0] # joint angle vector + first 2 from joint_vel vector
+            #state2 = [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0] # remainder of state
+        
+            # update state vector
+            #state = np.array([state1,state2]) # combine into state array
+            #obs_array = state.flatten() # flatten state into observation array
+            #obs = torch.Tensor(obs_array) # convert observation array to Tensor
          
-        # compute appropriate joint commands and execute commands: 
-        response = policy.get_angles(obs) # use RL policy to get 10 x 1 action output
-        response_in_radians = policy_to_cmd(response,references) # convert output of RL policy to joint angle command in radians 
-        self.response=self.convert_angles_to_commands(leg_angle_ids,response_in_radians) # convert 10 x 1 action vector to 10-bit joint commands
-        diff = typical_leg_angs - response_in_radians
-        sum1 = 0.0
-        num = 1
-        for x in diff:
-            sum1 += x*x
-            num += 1
-        rms = np.sqrt(sum1/num)
-        
-        rospy.loginfo("Observation: ")
-        rospy.loginfo(obs_array)
-        rospy.loginfo("Angles - Commands: ")
-        rospy.loginfo(diff)
-        rospy.loginfo("RMS diff: ")
-        rospy.loginfo(rms)
+            # compute appropriate joint commands and execute commands: 
+            #response = policy.get_angles(obs) # use RL policy to get 10 x 1 action output
+            #response_in_radians = policy_to_cmd(response,references) # convert output of RL policy to joint angle command in radians 
+            #self.response=self.convert_angles_to_commands(leg_angle_ids,response_in_radians) # convert 10 x 1 action vector to 10-bit joint commands
+            #diff = typical_leg_angs - response_in_radians
+            sum1 = 0.0
+            num = 1
+            for x in diff:
+                sum1 += x*x
+                num += 1
+                rms = np.sqrt(sum1/num)
+                       
+            rospy.loginfo("Observation: ")
+            rospy.loginfo(obs_array)
+            rospy.loginfo("Angles - Commands: ")
+            rospy.loginfo(diff)
+            rospy.loginfo("RMS diff: ")
+            rospy.loginfo(rms)
+            t += self.dt
 
         rospy.loginfo("Finished standing control thread")
 	

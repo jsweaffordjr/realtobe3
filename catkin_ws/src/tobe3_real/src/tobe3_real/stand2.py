@@ -303,7 +303,8 @@ class Stand:
         t = 0.0       
         while not rospy.is_shutdown(): 
             # read joint motor positions:
-            q = self.tobe.read_leg_angles()          
+            #q = self.tobe.read_leg_angles()  
+            q = self.tobe.read_arm_angles()        
                                          
             # compute appropriate joint commands and execute commands: 
             #rospy.loginfo("Fore lean, vel: %d, %d", self.fore_data.x, self.fore_data.y) 
@@ -314,37 +315,37 @@ class Stand:
 
             
             # check for repeating joint angle values:
-            threshold = 0.05
-            for i in range(10): 
-                if (abs(q[i] - self.q0_last1[i])+abs(q[i] - self.q0_last2[i])+abs(q[i] - self.q0_last3[i])+abs(q[i] - self.q0_last4[i])) <= threshold:
+            #threshold = 0.05
+            #for i in range(10): 
+            #    if (abs(q[i] - self.q0_last1[i])+abs(q[i] - self.q0_last2[i])+abs(q[i] - self.q0_last3[i])+abs(q[i] - self.q0_last4[i])) <= threshold:
                     # reset differentiator if past four values are very near the current joint angle value:
-                    self.q0_next[i] = q[i]
-                    self.q1_next[i] = 0.0
-                    self.q2_next[i] = 0.0
-                    self.q3_next[i] = 0.0 
+            #        self.q0_next[i] = q[i]
+            #        self.q1_next[i] = 0.0
+            #        self.q2_next[i] = 0.0
+            #        self.q3_next[i] = 0.0 
             
-            self.q0_last1=q
-            self.q0_last2=self.q0_last1
-            self.q0_last3=self.q0_last2
-            self.q0_last4=self.q0_last3
+            #self.q0_last1=q
+            #self.q0_last2=self.q0_last1
+            #self.q0_last3=self.q0_last2
+            #self.q0_last4=self.q0_last3
       
-            q0 = self.q0_next
-            q1 = self.q1_next
-            q2 = self.q2_next
-            q3 = self.q3_next
-            [joint_vels, q1dot,self.q0_next,self.q1_next,self.q2_next,self.q3_next] = HOSM_diff(dt, q, q0, q1, q2, q3)
+            #q0 = self.q0_next
+            #q1 = self.q1_next
+            #q2 = self.q2_next
+            #q3 = self.q3_next
+            #[joint_vels, q1dot,self.q0_next,self.q1_next,self.q2_next,self.q3_next] = HOSM_diff(dt, q, q0, q1, q2, q3)
             #self.tobe.publish_leg_ang_vels(joint_vels) # publish leg joint angular velocities
 
-            z = leg_angs
-            y = joint_vels
-            state1 = [z[0],z[2],z[4],z[6],z[8],z[1],z[3],z[5],z[7],z[9],y[0],y[2],y[4],y[6],y[8],y[1],y[3],y[5],y[7],y[9],self.fore_data.x, self.side_data.x,self.fore_data.y, self.side_data.y] 
+            #z = leg_angs
+            #y = joint_vels
+            #state1 = [z[0],z[2],z[4],z[6],z[8],z[1],z[3],z[5],z[7],z[9],y[0],y[2],y[4],y[6],y[8],y[1],y[3],y[5],y[7],y[9],self.fore_data.x, self.side_data.x,self.fore_data.y, self.side_data.y] 
             # update state vector
-            obs_array = np.array(state1) # create observation array
-            obs = torch.Tensor(obs_array) # convert observation array to Tensor
+            #obs_array = np.array(state1) # create observation array
+            #obs = torch.Tensor(obs_array) # convert observation array to Tensor
             
             # compute appropriate joint commands and execute commands: 
-            response = policy.get_angles(obs) # use RL policy to get 10 x 1 action output
-            response_in_radians = policy_to_cmd(response,references) # convert output of RL policy to joint angle command in radians 
+            #response = policy.get_angles(obs) # use RL policy to get 10 x 1 action output
+            #response_in_radians = policy_to_cmd(response,references) # convert output of RL policy to joint angle command in radians 
             
             
             #arm_joints=self.tobe.convert_angles_to_commands(arm_angle_ids,arm_angles) # convert to 10-bit cmds

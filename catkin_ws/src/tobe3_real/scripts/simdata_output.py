@@ -72,7 +72,8 @@ class DataOutput:
         lean = rospy.Publisher('simlean', Vector3, queue_size=1)
         push = rospy.Publisher('simpush', Vector3, queue_size=1)
         rate=rospy.Rate(self.runrate)
-        rospy.sleep(2.0)
+        #rospy.sleep(2.0)
+        rospy.loginfo("Data starts now.")
         while not rospy.is_shutdown():
             lean.publish(self.z)
             push.publish(self.accel)

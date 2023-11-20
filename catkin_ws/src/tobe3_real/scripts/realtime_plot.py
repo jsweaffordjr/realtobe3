@@ -17,7 +17,7 @@ class Visualizer:
         self.sub_cal=rospy.Subscriber('/calibration',Vector3,self._calibrate, queue_size=1)
         while self.calib == False:
             rospy.sleep(0.1)
-        rospy.sleep(10) 
+        rospy.sleep(12) 
         
         # plot initialization:
         self.fig, (self.ax1, self.ax2, self.ax3, self.ax4) = plt.subplots(4, sharex=True)

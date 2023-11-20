@@ -1,0 +1,5 @@
+<launch>
+  
+  <node name="stand_tobe" pkg="tobe3_real" type="tobe_stand.py" output="screen"/>
+   
+</launch>

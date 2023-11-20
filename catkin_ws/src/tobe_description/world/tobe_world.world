@@ -27,7 +27,14 @@
     <include>
       <uri>model://tobe_robot</uri>
       <name>tobe</name>
-      <pose>0 0 0.365 0 -0.05 0</pose>
+      <pose>0 0 0.365 0 0.06 0</pose>
     </include>
+    
+    <!-- Camera angle -->
+    <gui>
+      <camera name="initial_view">
+        <pose> 0.7 -0.4 0.28 0 0.1 2.7 </pose> 
+      </camera>
+    </gui>
   </world>
 </sdf>

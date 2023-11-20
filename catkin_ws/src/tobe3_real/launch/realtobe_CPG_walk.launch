@@ -1,0 +1,5 @@
+<launch>
+  
+  <node name="walk_tobe" pkg="tobe3_real" type="tobe_walk.py" output="screen"/>
+    
+</launch>

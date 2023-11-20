@@ -4,7 +4,9 @@ from threading import Thread
 import rospy
 import math
 import numpy as np
+import time
 from geometry_msgs.msg import Vector3
+from tobe3_real.tobe import Tobe
 
 
 class WalkFunc:
@@ -282,8 +284,29 @@ class WalkFunc:
             angles["l_elbow"] = -0.5236
             angles["r_shoulder_sagittal"] = 0.3927
             angles["r_elbow"] = 0.5236
-
-        return angles
+        
+        f1 = angles["r_shoulder_sagittal"]
+        f2 = angles["l_shoulder_sagittal"]
+        f3 = angles["r_shoulder_frontal"]
+        f4 = angles["l_shoulder_frontal"]
+        f5 = angles["r_elbow"]
+        f6 = angles["l_elbow"]
+        f7 = angles["r_hip_swivel"]
+        f8 = angles["l_hip_swivel"]
+        f9 = angles["r_hip_frontal"]
+        f10 = angles["l_hip_frontal"]
+        f11 = angles["r_hip_sagittal"]
+        f12 = angles["l_hip_sagittal"]
+        f13 = angles["r_knee"]
+        f14 = angles["l_knee"]
+        f15 = angles["r_ankle_sagittal"]
+        f16 = angles["l_ankle_sagittal"]
+        f17 = angles["r_ankle_frontal"]
+        f18 = angles["l_ankle_frontal"]
+        
+        f = np.array([f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13,f14,f15,f16,f17,f18]) 
+        
+        return f
 
     def generate(self):
         """
@@ -313,7 +336,10 @@ class WalkFunc:
         angles["r_shoulder_sagittal"] = f[15]
         angles["r_shoulder_frontal"] = f[16]
         angles["r_elbow"] = f[17]
-        return angles
+        
+        g = np.array([f[15],f[12],f[16],f[13],f[17],f[14],f[6],f[5],f[7],f[4],f[8],f[3],f[9],f[2],f[10],f[1],f[11],f[0]])
+        
+        return g
 
 
 class Walker:
@@ -321,22 +347,24 @@ class Walker:
     Class for making Tobe walk
     """
 
-    def __init__(self):
+    def __init__(self, tobe):
+        self.tobe=tobe
         self.running = False
 
         self.velocity = [0, 0, 0]
         self.walking = False
         self.func = WalkFunc()
         self.Tinit = 2
-        self.dt = 0.02
+        self.dt = 0.02 # 
         self.T = self.Tinit
         self.phase = -math.pi
         self.A = self.func.update_walk(self.velocity, self.dt, self.phase)
         self.ready_pos = self.func.generate() #self.func.get(self.A, self.phase)
+        self.angles = self.ready_pos
 
         self._th_walk = None
 
-#        self._sub_cmd_vel = rospy.Subscriber(tobe.ns+"cmd_vel", Vector3, self._cb_cmd_vel, queue_size=1)
+        self._sub_cmd_vel = rospy.Subscriber(tobe.ns+"cmd_vel", Vector3, self._cb_cmd_vel, queue_size=1)
 
     def _cb_cmd_vel(self, msg):
         """
@@ -355,7 +383,7 @@ class Walker:
         """
         rospy.loginfo("Going to walk position")
         if self.get_dist_to_ready() > 0.02:
-            #self.tobe.set_angles_slow(self.ready_pos)
+            self.set_angles_slow(self.ready_pos)
             rospy.loginfo("Done")
 
     def start(self):
@@ -383,7 +411,7 @@ class Walker:
         Main walking loop, smoothly update velocity vectors and apply corresponding angles
         """
         # increment=1
-        samplerate = 50
+        samplerate = 50 # 
         r = rospy.Rate(samplerate)
         dt = 1.0/samplerate
         rospy.loginfo("Started walking thread")
@@ -424,10 +452,12 @@ class Walker:
             if self.phase >= math.pi:
                 self.phase = -math.pi
 
-            self.A = func.update_walk(self.velocity, dt, self.phase)
-            angles = func.get(self.A, self.phase)
             self.update_velocity(self.velocity, n)
-            #self.tobe.set_angles(angles)
+            self.A = func.update_walk(self.velocity, dt, self.phase)
+            
+            self.angles = func.get(self.A, self.phase)
+            self.set_angles(self.angles)
+            
             r.sleep()
         rospy.loginfo("Finished walking thread")
 
@@ -457,21 +487,42 @@ class Walker:
             a*t+b*v for (t, v) in zip(target, self.current_velocity)]
 
     def get_dist_to_ready(self):
-        #angles = self.tobe.get_angles()
+        ids = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18] # Dynamixel motor ID #'s
+        poses = self.tobe.read_all_motor_positions()
+        angles = self.tobe.convert_motor_positions_to_angles(ids, poses)
         return get_distance(self.ready_pos, angles)
+        
+    def set_angles_slow(self,stop_angles,delay=2):
+        start_angles=self.angles
+        start=time.time()
+        stop=start+delay
+        r=rospy.Rate(100)
+        while not rospy.is_shutdown():
+            t=time.time()
+            if t>stop: break
+            ratio=(t-start)/delay            
+            angles=interpolate(stop_angles,start_angles,ratio)                        
+            self.set_angles(angles)
+            r.sleep()
+            
+    def set_angles(self, angles):
+        ids = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18] # Dynamixel motor ID #'s
+        cmds = self.tobe.convert_angles_to_commands(ids, angles)            
+        self.tobe.command_all_motors(cmds)
 
 
 def interpolate(anglesa, anglesb, coefa):
     z = {}
-    joints = anglesa.keys()
+    joints = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17] #anglesa.keys()
     for j in joints:
         z[j] = anglesa[j]*coefa+anglesb[j]*(1-coefa)
     return z
 
 
+
 def get_distance(anglesa, anglesb):
     d = 0
-    joints = anglesa.keys()
+    joints = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17] #anglesa.keys()
     if len(joints) == 0:
         return 0
     for j in joints:

@@ -1,0 +1,26 @@
+<launch>
+
+  <param name="robot_description" textfile="$(find tobe_description)/models/tobe_robot/tobe_torque.urdf" /> 
+
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(find tobe_description)/world/tobe_world.world" />
+    <arg name="paused" value="true"/>
+    <arg name="use_sim_time" value="false"/>
+    
+  </include>
+  
+  <include file="$(find tobe_control)/launch/tobe_control.launch"/>
+  
+  <node name="stand_tobe_sim" pkg="tobe3_real" type="simtobe_stand.py" output="screen"/>
+  
+  <node name="process_raw_data" pkg="tobe3_real" type="simdata_output.py" output="screen"/>
+  
+  <node pkg="rosservice" type="rosservice" name="set_joints" args="call --wait /gazebo/set_model_configuration '{model_name: tobe, joint_names:['r_shoulder_swing_joint','l_shoulder_swing_joint','r_shoulder_lateral_joint','l_shoulder_lateral_joint','r_elbow_joint','l_elbow_joint', 'r_hip_lateral_joint','l_hip_lateral_joint','r_hip_swing_joint','l_hip_swing_joint','r_knee_joint','l_knee_joint','r_ankle_swing_joint', 'l_ankle_swing_joint','r_ankle_lateral_joint','l_ankle_lateral_joint'], joint_positions: [-0.2,0.2,-0.35,-0.35,0.52,-0.52,0.05,-0.05,-0.75,0.75,1.75,-1.75,1.1,-1.1,0.05,-0.05]}'"/>
+
+  <arg name = "start_physics_delay" default="5.0" />
+  <node pkg="rosservice" type="rosservice" name="start_physics" launch-prefix="bash -c 'sleep $(arg start_physics_delay); $0 $@' " args="call --wait /gazebo/unpause_physics"/>
+  
+  <arg name = "apply_force_delay" default="15.0" />
+  <node name="apply_force" pkg="tobe3_real" type="test_force.py" launch-prefix="bash -c 'sleep $(arg apply_force_delay); $0 $@' " output="screen" />
+
+</launch>
